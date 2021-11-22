@@ -1,0 +1,9 @@
+package core
+
+const (
+	MainnetChainID = "pandonet"
+
+	MainnetGenesisBlockHash = ""
+
+	GenesisBlockHeight = uint64(0)
+)
