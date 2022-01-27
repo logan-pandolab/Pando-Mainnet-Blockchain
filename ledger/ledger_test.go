@@ -39,6 +39,10 @@ func TestLedgerScreenTx(t *testing.T) {
 	_, res := ledger.ScreenTx(sendTxBytes)
 	assert.True(res.IsOK(), res.Message)
 
+	rametronStakeTxBytes := newRawRametronStakeTx(chainID, 1, true, accOut, accIns[0], false)
+	_, res = ledger.ScreenTx(rametronStakeTxBytes)
+	assert.True(res.IsOK(), res.Message)
+
 	coinbaseTxBytes := newRawCoinbaseTx(chainID, ledger, 1)
 	_, res = ledger.ScreenTx(coinbaseTxBytes)
 	assert.Equal(result.CodeUnauthorizedTx, res.Code, res.Message)
@@ -54,12 +58,17 @@ func TestLedgerProposerBlockTxs(t *testing.T) {
 	// Insert send transactions into the mempool
 	numMempoolTxs := 2 * core.MaxNumRegularTxsPerBlock
 	rawSendTxs := []common.Bytes{}
+	rawRametronStakeTxs := []common.Bytes{}
 	for idx := 0; idx < numMempoolTxs; idx++ {
 		sequence := 1
 		sendTxBytes := newRawSendTx(chainID, sequence, true, accOut, accIns[idx], true)
 		err := mempool.InsertTransaction(sendTxBytes)
 		assert.Nil(err, fmt.Sprintf("Mempool insertion error: %v", err))
 		rawSendTxs = append(rawSendTxs, sendTxBytes)
+		rametronStakeTxBytes := newRawRametronStakeTx(chainID, sequence, true, accOut, accIns[idx], true)
+		err = mempool.InsertTransaction(rametronStakeTxBytes)
+		assert.Nil(err, fmt.Sprintf("Mempool insertion error: %v", err))
+		rawRametronStakeTxs = append(rawRametronStakeTxs, rametronStakeTxBytes)
 	}
 	assert.Equal(numMempoolTxs, mempool.Size())
 
@@ -101,6 +110,32 @@ func TestLedgerProposerBlockTxs(t *testing.T) {
 				log.Infof("tx fee: %v, feeDiff: %v", currSendTx.Fee, feeDiff)
 			}
 			prevSendTx = currSendTx
+		}
+	}
+
+	// Transaction sanity checks
+	var prevRametronStakeTx *types.RametronStakeTx
+	for idx := 0; idx < expectedTotalNumTx; idx++ {
+		rawTx := blockTxs[idx]
+		tx, err := types.TxFromBytes(rawTx)
+		assert.Nil(err)
+		switch tx.(type) {
+		// case *types.CoinbaseTx:
+		// 	assert.Equal(0, idx) // The first tx needs to be a coinbase transaction
+		// 	coinbaseTx := tx.(*types.CoinbaseTx)
+		// 	signBytes := coinbaseTx.SignBytes(chainID)
+		// 	ledger.consensus.PrivateKey().PublicKey().VerifySignature(signBytes, coinbaseTx.Proposer.Signature)
+		case *types.RametronStakeTx:
+			assert.True(idx >= 0)
+			currRametronStakeTx := tx.(*types.RametronStakeTx)
+			if prevRametronStakeTx != nil {
+				// mempool should works like a priority queue, for the same type of tx (i.e. RametronStakeTx),
+				// those with higher fee should get reaped first
+				feeDiff := prevRametronStakeTx.Fee.Minus(currRametronStakeTx.Fee)
+				assert.True(feeDiff.IsNonnegative())
+				log.Infof("tx fee: %v, feeDiff: %v", currRametronStakeTx.Fee, feeDiff)
+			}
+			prevRametronStakeTx = currRametronStakeTx
 		}
 	}
 }
@@ -678,3 +713,4 @@ func TestGuardianStakeUpdate(t *testing.T) {
 	assert.True(returnedCoins.PTXWei.Cmp(core.Zero) == 0)
 	log.Infof("Returned coins: %v", returnedCoins)
 }
+

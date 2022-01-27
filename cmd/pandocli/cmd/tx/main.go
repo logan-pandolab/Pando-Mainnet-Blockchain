@@ -50,4 +50,6 @@ func init() {
 	TxCmd.AddCommand(smartContractCmd)
 	TxCmd.AddCommand(depositStakeCmd)
 	TxCmd.AddCommand(withdrawStakeCmd)
+	TxCmd.AddCommand(rametronStakeCmd)
 }
+

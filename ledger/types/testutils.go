@@ -122,3 +122,21 @@ func SignSendTx(chainID string, tx *SendTx, accs ...PrivAccount) {
 		tx.Inputs[i].Signature = accs[i].Sign(signBytes)
 	}
 }
+
+func MakeRametronStakeTx(seq int, accOut PrivAccount, accsIn ...PrivAccount) *RametronStakeTx {
+	tx := &RametronStakeTx{
+		Fee:     NewCoins(0, int64(MinimumTransactionFeePTXWei)),
+		Inputs:  Accs2TxInputs(seq, accsIn...),
+		Outputs: Accs2TxOutputs(accOut),
+	}
+
+	return tx
+}
+
+func SignRametronStakeTx(chainID string, tx *RametronStakeTx, accs ...PrivAccount) {
+	signBytes := tx.SignBytes(chainID)
+	for i, _ := range tx.Inputs {
+		tx.Inputs[i].Signature = accs[i].Sign(signBytes)
+	}
+}
+

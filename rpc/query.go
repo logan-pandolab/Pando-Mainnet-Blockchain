@@ -231,6 +231,7 @@ const (
 	TxTypeCoinbase = byte(iota)
 	TxTypeSlash
 	TxTypeSend
+	TxTypeRametronStake
 	TxTypeReserveFund
 	TxTypeReleaseFund
 	TxTypeServicePayment
@@ -648,6 +649,8 @@ func getTxType(tx types.Tx) byte {
 		t = TxTypeSlash
 	case *types.SendTx:
 		t = TxTypeSend
+	case *types.RametronStakeTx:
+		t = TxTypeRametronStake
 	case *types.ReserveFundTx:
 		t = TxTypeReserveFund
 	case *types.ReleaseFundTx:
@@ -668,3 +671,4 @@ func getTxType(tx types.Tx) byte {
 
 	return t
 }
+

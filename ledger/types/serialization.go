@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/pandotoken/pando/rlp"
+	"github.com/pkg/errors"
 )
 
 const maxTxSize = 1024 * 1024
@@ -28,6 +28,7 @@ const (
 	TxCoinbase TxType = iota
 	TxSlash
 	TxSend
+	TxRametronStake
 	TxReserveFund
 	TxReleaseFund
 	TxServicePayment
@@ -77,6 +78,10 @@ func TxFromBytes(raw []byte) (Tx, error) {
 		data := &SendTx{}
 		err = s.Decode(data)
 		return data, err
+	} else if txType == TxRametronStake {
+		data := &RametronStakeTx{}
+		err = s.Decode(data)
+		return data, err
 	} else if txType == TxReserveFund {
 		data := &ReserveFundTx{}
 		err = s.Decode(data)
@@ -124,6 +129,8 @@ func TxToBytes(t Tx) ([]byte, error) {
 		txType = TxSlash
 	case *SendTx:
 		txType = TxSend
+	case *RametronStakeTx:
+		txType = TxRametronStake
 	case *ReserveFundTx:
 		txType = TxReserveFund
 	case *ReleaseFundTx:
@@ -153,3 +160,4 @@ func TxToBytes(t Tx) ([]byte, error) {
 	}
 	return buf.Bytes(), nil
 }
+

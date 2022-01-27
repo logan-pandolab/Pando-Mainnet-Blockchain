@@ -5,11 +5,11 @@ import (
 	"math/big"
 	"testing"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
 	"github.com/pandotoken/pando/common"
 	"github.com/pandotoken/pando/common/result"
 	"github.com/pandotoken/pando/ledger/types"
+	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetInputs(t *testing.T) {
@@ -335,6 +335,67 @@ func TestSendDuplicatedInputOutput(t *testing.T) {
 	accInBal1 := et.executor.state.Delivered().GetAccount(et.accIn.Address).Balance
 	accOutBal1 := et.executor.state.Delivered().GetAccount(et.accOut.Address).Balance
 	t.Logf("----- After executing SendTx -----\n")
+	t.Logf("accIn.Balance  = %v\n", accInBal1)
+	t.Logf("accOut.Balance = %v\n", accOutBal1)
+
+	assert.Equal(accInBal0, accInBal1)
+	assert.Equal(accOutBal0, accOutBal1)
+}
+
+func TestRametronStakeDuplicatedInputOutput(t *testing.T) {
+	assert := assert.New(t)
+	et := NewExecTest()
+
+	et.acc2State(et.accIn)
+	et.acc2State(et.accOut)
+
+	fee := types.NewCoins(0, getMinimumTxFee())
+	c1 := types.NewCoins(20000, 0)
+	c2 := types.NewCoins(50000, 3000)
+	rametronStakeTx := &types.RametronStakeTx{
+		Fee: fee,
+		Inputs: []types.TxInput{
+			types.TxInput{
+				Address:  et.accIn.Address,
+				Coins:    c1.Plus(fee),
+				Sequence: et.accIn.Sequence + 1,
+			},
+			types.TxInput{
+				Address:  et.accOut.Address,
+				Coins:    c2,
+				Sequence: et.accOut.Sequence + 1,
+			},
+		},
+		Outputs: []types.TxOutput{
+			types.TxOutput{
+				Address: et.accIn.Address,
+				Coins:   c1,
+			},
+			types.TxOutput{
+				Address: et.accOut.Address,
+				Coins:   c2,
+			},
+		},
+	}
+
+	// Sign transaction
+	signBytes := rametronStakeTx.SignBytes(et.chainID)
+	rametronStakeTx.Inputs[0].Signature = et.accIn.Sign(signBytes)
+	rametronStakeTx.Inputs[1].Signature = et.accOut.Sign(signBytes)
+
+	accInBal0 := et.accIn.Balance
+	accOutBal0 := et.accOut.Balance
+	t.Logf("----- Before executing RametronStakeTx -----\n")
+	t.Logf("accIn.Balance  = %v\n", accInBal0)
+	t.Logf("accOut.Balance = %v\n", accOutBal0)
+
+	res, _, _, _, _ := et.execRametronStakeTx(rametronStakeTx, true)
+	assert.False(res.IsOK(), "ExecTx/Good CheckTx: Expected OK return from ExecTx, Error: %v", res)
+	et.executor.state.Commit()
+
+	accInBal1 := et.executor.state.Delivered().GetAccount(et.accIn.Address).Balance
+	accOutBal1 := et.executor.state.Delivered().GetAccount(et.accOut.Address).Balance
+	t.Logf("----- After executing RametronStakeTx -----\n")
 	t.Logf("accIn.Balance  = %v\n", accInBal1)
 	t.Logf("accOut.Balance = %v\n", accOutBal1)
 
@@ -1745,7 +1806,7 @@ func TestSplitRuleSingleHundredPercSplits(t *testing.T) {
 	log.Infof("Carol's final balance: %v", carolFinalBalance)
 
 	// Check the balances of the relevant accounts
-	aliceSplitCoins := types.Coins{: big.NewInt(payAmount * 100 / 100), PandoWei: big.NewInt(0)}
+	aliceSplitCoins := types.Coins{PTXWei: big.NewInt(payAmount * 100 / 100), PandoWei: big.NewInt(0)}
 	carolSplitCoins := types.Coins{PTXWei: big.NewInt(0), PandoWei: big.NewInt(0)} // Carol should get nothing
 	aliceReservedFund := types.Coins{PTXWei: big.NewInt(2001 * txFee), PandoWei: big.NewInt(0)}
 	reserveFundTxFee := types.NewCoins(0, getMinimumTxFee())
@@ -2251,3 +2312,4 @@ func TestSplitRuleZeroDuration(t *testing.T) {
 	retrievedSplitRule2ndTime := et.state().Delivered().GetSplitRule(resourceID)
 	assert.Nil(retrievedSplitRule2ndTime) // Should be expired and got deleted
 }
+
