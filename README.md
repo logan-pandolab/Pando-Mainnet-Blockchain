@@ -1,5 +1,5 @@
-Run Pando-Blockchain 2.0
-git clone https://github.com/logan-pandolab/Pando-Mainnet-Blockchain.git  usr/local/go/src/github.com/pandotoken/pando
+run blockchain node
+git clone https://github.com/chandanoodles/pandoblockchaincode.git usr/local/go/src/github.com/pandotoken/pando
 export PANDO_HOME=/usr/local/go/src/github.com/pandotoken/pando
 #sudo apt-get install build-essential
 #sudo snap install go --classic
