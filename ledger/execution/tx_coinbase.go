@@ -19,7 +19,7 @@ import (
 )
 
 var weiMultiplier = big.NewInt(1e18)
-var ptxRewardPerBlock = big.NewInt(1).Mul(big.NewInt(48), weiMultiplier) // 48 PTX per block, corresponds to about 5% *initial* annual inflation rate. The inflation rate naturally approaches 0 as the chain grows.
+var ptxRewardPerBlock = big.NewInt(1).Mul(big.NewInt(16), weiMultiplier) // 48 PTX per block, corresponds to about 5% *initial* annual inflation rate. The inflation rate naturally approaches 0 as the chain grows.
 var ptxRewardN = 400                                                     // Reward receiver sampling params
 
 var _ TxExecutor = (*CoinbaseTxExecutor)(nil)
