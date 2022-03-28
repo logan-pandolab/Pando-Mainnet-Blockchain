@@ -1,10 +1,15 @@
-FROM golang:latest
-ENV GOPATH=/app
-ENV PATH=$GOPATH/bin:$PATH
-WORKDIR /app/src/github.com/pandotoken/pando
-COPY . .
+FROM golang:1.17
+WORKDIR /go/src
+RUN mkdir -p github.com/pandotoken && chmod -R 777 /go 
+WORKDIR /go/src/github.com/pandotoken/pando
+COPY . /go/src/github.com/pandotoken/pando/
+WORKDIR /go/src/github.com/pandotoken/pando
+RUN mkdir ../pandonet
+WORKDIR /go/src/github.com/pandotoken/pando/integration/pandonet/
+RUN cp -ivr * /go/src/github.com/pandotoken/pandonet/
+WORKDIR /go/src/github.com/pandotoken/pando
 RUN make install
-RUN cp -r ./integration/testnet_amber ../
-EXPOSE 28888
-CMD pando start --config=../testnet_amber/node --password="qwertyuiop"
-
+EXPOSE 16888
+EXPOSE 16889
+EXPOSE 12000
+CMD ["ls"]
