@@ -1,0 +1,14 @@
+version: '3.7'
+services:
+  blockchain1:
+    build:
+      context: .
+    command: >
+        bash -c "/usr/local/go/bin/pando start 
+        --config=/usr/local/go/src/github.com/pandotoken/pandonet/node 
+        --password=KeshavMIshra123 | /usr/local/go/bin/pandocli daemon start 
+        --port=16889"
+    ports:
+      - 16889
+      - 12000
+      - 16888
