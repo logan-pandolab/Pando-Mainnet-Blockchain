@@ -37,6 +37,7 @@ type Executor struct {
 	// slashTxExec          *SlashTxExecutor
 	sendTxExec           *SendTxExecutor
 	rametronStakeTxExec  *RametronStakeTxExecutor
+	withdrawrametronStakeTxExec  *WithdrawRametronStakeTxExecutor
 	reserveFundTxExec    *ReserveFundTxExecutor
 	releaseFundTxExec    *ReleaseFundTxExecutor
 	servicePaymentTxExec *ServicePaymentTxExecutor
@@ -60,6 +61,7 @@ func NewExecutor(db database.Database, chain *blockchain.Chain, state *st.Ledger
 		// slashTxExec:          NewSlashTxExecutor(consensus, valMgr),
 		sendTxExec:           NewSendTxExecutor(),
 		rametronStakeTxExec:  NewRametronStakeTxExecutor(),
+		withdrawrametronStakeTxExec:  NewWithdrawRametronStakeTxExecutor(),
 		reserveFundTxExec:    NewReserveFundTxExecutor(state),
 		releaseFundTxExec:    NewReleaseFundTxExecutor(state),
 		servicePaymentTxExec: NewServicePaymentTxExecutor(state),
@@ -194,6 +196,8 @@ func (exec *Executor) getTxExecutor(tx types.Tx) TxExecutor {
 		txExecutor = exec.sendTxExec
 	case *types.RametronStakeTx:
 		txExecutor = exec.rametronStakeTxExec
+	case *types.WithdrawRametronStakeTx:
+		txExecutor = exec.withdrawrametronStakeTxExec
 	case *types.ReserveFundTx:
 		txExecutor = exec.reserveFundTxExec
 	case *types.ReleaseFundTx:

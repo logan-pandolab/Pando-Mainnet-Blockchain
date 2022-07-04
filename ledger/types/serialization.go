@@ -29,6 +29,7 @@ const (
 	TxSlash
 	TxSend
 	TxRametronStake
+	TxWithdrawRametronStake
 	TxReserveFund
 	TxReleaseFund
 	TxServicePayment
@@ -82,6 +83,10 @@ func TxFromBytes(raw []byte) (Tx, error) {
 		data := &RametronStakeTx{}
 		err = s.Decode(data)
 		return data, err
+	} else if txType == TxWithdrawRametronStake {
+		data := &WithdrawRametronStakeTx{}
+		err = s.Decode(data)
+		return data, err
 	} else if txType == TxReserveFund {
 		data := &ReserveFundTx{}
 		err = s.Decode(data)
@@ -131,6 +136,8 @@ func TxToBytes(t Tx) ([]byte, error) {
 		txType = TxSend
 	case *RametronStakeTx:
 		txType = TxRametronStake
+	case *WithdrawRametronStakeTx:
+		txType = TxWithdrawRametronStake
 	case *ReserveFundTx:
 		txType = TxReserveFund
 	case *ReleaseFundTx:

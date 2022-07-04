@@ -412,6 +412,58 @@ func newRawRametronStakeTx(chainID string, sequence int, addPubKey bool, accOut,
 	return sendTxBytes
 }
 
+func newRawWithdrawRametronStakeTx(chainID string, sequence int, addPubKey bool, accOut, accIn types.PrivAccount, injectFeeFluctuation bool) common.Bytes {
+	delta := int64(0)
+	var err error
+	if injectFeeFluctuation {
+		// inject so fluctuation into the txFee, so later we can test whether the
+		// mempool orders the txs by txFee
+		randint, err := strconv.ParseInt(string(accIn.Address.Hex()[2:9]), 16, 64)
+		if randint < 0 {
+			randint = -randint
+		}
+		delta = randint * int64(types.GasSendTxPerAccount*2)
+		if err != nil {
+			panic(err)
+		}
+	}
+	txFee := getMinimumTxFee() + delta
+	withdrawrametronStakeTx := &types.WithdrawRametronStakeTx{
+		Fee: types.NewCoins(0, txFee),
+		Inputs: []types.TxInput{
+			{
+				Sequence: uint64(sequence),
+				Address:  accIn.Address,
+				Coins:    types.NewCoins(15, txFee),
+			},
+		},
+		Outputs: []types.TxOutput{
+			{
+				Address: accOut.Address,
+				Coins:   types.NewCoins(15, 0),
+			},
+		},
+	}
+
+	signBytes := withdrawrametronStakeTx.SignBytes(chainID)
+	inAccs := []types.PrivAccount{accIn}
+	for idx, in := range withdrawrametronStakeTx.Inputs {
+		inAcc := inAccs[idx]
+		sig, err := inAcc.PrivKey.Sign(signBytes)
+		if err != nil {
+			panic("Failed to sign the coinbase transaction")
+		}
+		withdrawrametronStakeTx.SetSignature(in.Address, sig)
+	}
+
+	sendTxBytes, err := types.TxToBytes(withdrawrametronStakeTx)
+	if err != nil {
+		panic(err)
+	}
+	return sendTxBytes
+}
+
+
 func getMinimumTxFee() int64 {
 	return int64(types.MinimumTransactionFeePTXWei)
 }

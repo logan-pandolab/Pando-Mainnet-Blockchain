@@ -43,6 +43,10 @@ func TestLedgerScreenTx(t *testing.T) {
 	_, res = ledger.ScreenTx(rametronStakeTxBytes)
 	assert.True(res.IsOK(), res.Message)
 
+	withdrawrametronStakeTxBytes := newRawWithdrawRametronStakeTx(chainID, 1, true, accOut, accIns[0], false)
+	_, res = ledger.ScreenTx(withdrawrametronStakeTxBytes)
+	assert.True(res.IsOK(), res.Message)
+
 	coinbaseTxBytes := newRawCoinbaseTx(chainID, ledger, 1)
 	_, res = ledger.ScreenTx(coinbaseTxBytes)
 	assert.Equal(result.CodeUnauthorizedTx, res.Code, res.Message)
@@ -59,6 +63,7 @@ func TestLedgerProposerBlockTxs(t *testing.T) {
 	numMempoolTxs := 2 * core.MaxNumRegularTxsPerBlock
 	rawSendTxs := []common.Bytes{}
 	rawRametronStakeTxs := []common.Bytes{}
+	rawWithdrawRametronStakeTxs := []common.Bytes{}
 	for idx := 0; idx < numMempoolTxs; idx++ {
 		sequence := 1
 		sendTxBytes := newRawSendTx(chainID, sequence, true, accOut, accIns[idx], true)
@@ -69,6 +74,10 @@ func TestLedgerProposerBlockTxs(t *testing.T) {
 		err = mempool.InsertTransaction(rametronStakeTxBytes)
 		assert.Nil(err, fmt.Sprintf("Mempool insertion error: %v", err))
 		rawRametronStakeTxs = append(rawRametronStakeTxs, rametronStakeTxBytes)
+		withdrawrametronStakeTxBytes := newRawWithdrawRametronStakeTx(chainID, sequence, true, accOut, accIns[idx], true)
+		err = mempool.InsertTransaction(withdrawrametronStakeTxBytes)
+		assert.Nil(err, fmt.Sprintf("Mempool insertion error: %v", err))
+		rawWithdrawRametronStakeTxs = append(rawWithdrawRametronStakeTxs, withdrawrametronStakeTxBytes)
 	}
 	assert.Equal(numMempoolTxs, mempool.Size())
 
@@ -136,6 +145,32 @@ func TestLedgerProposerBlockTxs(t *testing.T) {
 				log.Infof("tx fee: %v, feeDiff: %v", currRametronStakeTx.Fee, feeDiff)
 			}
 			prevRametronStakeTx = currRametronStakeTx
+		}
+	}
+
+	// Transaction sanity checks
+	var prevWithdrawRametronStakeTx *types.WithdrawRametronStakeTx
+	for idx := 0; idx < expectedTotalNumTx; idx++ {
+		rawTx := blockTxs[idx]
+		tx, err := types.TxFromBytes(rawTx)
+		assert.Nil(err)
+		switch tx.(type) {
+		// case *types.CoinbaseTx:
+		// 	assert.Equal(0, idx) // The first tx needs to be a coinbase transaction
+		// 	coinbaseTx := tx.(*types.CoinbaseTx)
+		// 	signBytes := coinbaseTx.SignBytes(chainID)
+		// 	ledger.consensus.PrivateKey().PublicKey().VerifySignature(signBytes, coinbaseTx.Proposer.Signature)
+		case *types.WithdrawRametronStakeTx:
+			assert.True(idx >= 0)
+			currWithdrawRametronStakeTx := tx.(*types.WithdrawRametronStakeTx)
+			if prevWithdrawRametronStakeTx != nil {
+				// mempool should works like a priority queue, for the same type of tx (i.e. WithdrawRametronStakeTx),
+				// those with higher fee should get reaped first
+				feeDiff := prevWithdrawRametronStakeTx.Fee.Minus(currWithdrawRametronStakeTx.Fee)
+				assert.True(feeDiff.IsNonnegative())
+				log.Infof("tx fee: %v, feeDiff: %v", currWithdrawRametronStakeTx.Fee, feeDiff)
+			}
+			prevWithdrawRametronStakeTx = currWithdrawRametronStakeTx
 		}
 	}
 }

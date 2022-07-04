@@ -139,6 +139,23 @@ func TestTx(t *testing.T) {
 	assert.Equal(tx1.(*RametronStakeTx).Outputs[2].Address, tx2.(*RametronStakeTx).Outputs[2].Address)
 	assert.Equal(tx1.(*RametronStakeTx).Fee, tx2.(*RametronStakeTx).Fee)
 
+	//-----------------------Rametron withdraw stake-----------
+	tx1 = &WithdrawRametronStakeTx{
+		Fee:     NewCoins(123, 0),
+		Inputs:  []TxInput{{Address: getTestAddress("123")}, {Address: getTestAddress("798")}},
+		Outputs: []TxOutput{{Address: getTestAddress("456")}, {Address: getTestAddress("888")}, {Address: getTestAddress("999")}},
+	}
+	b, err = TxToBytes(tx1)
+	require.Nil(err)
+	tx2, err = TxFromBytes(b)
+	require.Nil(err)
+	assert.Equal(tx1.(*WithdrawRametronStakeTx).Inputs[0].Address, tx2.(*WithdrawRametronStakeTx).Inputs[0].Address)
+	assert.Equal(tx1.(*WithdrawRametronStakeTx).Inputs[1].Address, tx2.(*WithdrawRametronStakeTx).Inputs[1].Address)
+	assert.Equal(tx1.(*WithdrawRametronStakeTx).Outputs[0].Address, tx2.(*WithdrawRametronStakeTx).Outputs[0].Address)
+	assert.Equal(tx1.(*WithdrawRametronStakeTx).Outputs[1].Address, tx2.(*WithdrawRametronStakeTx).Outputs[1].Address)
+	assert.Equal(tx1.(*WithdrawRametronStakeTx).Outputs[2].Address, tx2.(*WithdrawRametronStakeTx).Outputs[2].Address)
+	assert.Equal(tx1.(*WithdrawRametronStakeTx).Fee, tx2.(*WithdrawRametronStakeTx).Fee)
+
 	tx1 = &ReserveFundTx{
 		Fee:         NewCoins(123, 0),
 		Source:      TxInput{Address: getTestAddress("123")},

@@ -140,3 +140,19 @@ func SignRametronStakeTx(chainID string, tx *RametronStakeTx, accs ...PrivAccoun
 	}
 }
 
+func MakeWithdrawRametronStakeTx(seq int, accOut PrivAccount, accsIn ...PrivAccount) *WithdrawRametronStakeTx {
+	tx := &WithdrawRametronStakeTx{
+		Fee:     NewCoins(0, int64(MinimumTransactionFeePTXWei)),
+		Inputs:  Accs2TxInputs(seq, accsIn...),
+		Outputs: Accs2TxOutputs(accOut),
+	}
+
+	return tx
+}
+
+func SignWithdrawRametronStakeTx(chainID string, tx *WithdrawRametronStakeTx, accs ...PrivAccount) {
+	signBytes := tx.SignBytes(chainID)
+	for i, _ := range tx.Inputs {
+		tx.Inputs[i].Signature = accs[i].Sign(signBytes)
+	}
+}

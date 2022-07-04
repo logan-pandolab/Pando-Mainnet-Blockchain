@@ -345,8 +345,15 @@ type RametronStakeTx struct {
 	Outputs []TxOutput `json:"outputs"`
 }
 
+type WithdrawRametronStakeTx struct {
+	Fee     Coins      `json:"fee"` // Fee
+	Inputs  []TxInput  `json:"inputs"`
+	Outputs []TxOutput `json:"outputs"`
+}
+
 func (_ *SendTx) AssertIsTx()          {}
 func (_ *RametronStakeTx) AssertIsTx() {}
+func (_ *WithdrawRametronStakeTx) AssertIsTx() {}
 
 func (tx *SendTx) SignBytes(chainID string) []byte {
 	signBytes := encodeToBytes(chainID)
@@ -366,6 +373,23 @@ func (tx *SendTx) SignBytes(chainID string) []byte {
 }
 
 func (tx *RametronStakeTx) SignBytes(chainID string) []byte {
+	signBytes := encodeToBytes(chainID)
+	sigz := make([]*crypto.Signature, len(tx.Inputs))
+	for i := range tx.Inputs {
+		sigz[i] = tx.Inputs[i].Signature
+		tx.Inputs[i].Signature = nil
+	}
+	txBytes, _ := TxToBytes(tx)
+	signBytes = append(signBytes, txBytes...)
+	signBytes = addPrefixForSignBytes(signBytes)
+
+	for i := range tx.Inputs {
+		tx.Inputs[i].Signature = sigz[i]
+	}
+	return signBytes
+}
+
+func (tx *WithdrawRametronStakeTx) SignBytes(chainID string) []byte {
 	signBytes := encodeToBytes(chainID)
 	sigz := make([]*crypto.Signature, len(tx.Inputs))
 	for i := range tx.Inputs {
@@ -402,12 +426,26 @@ func (tx *RametronStakeTx) SetSignature(addr common.Address, sig *crypto.Signatu
 	return false
 }
 
+func (tx *WithdrawRametronStakeTx) SetSignature(addr common.Address, sig *crypto.Signature) bool {
+	for i, input := range tx.Inputs {
+		if input.Address == addr {
+			tx.Inputs[i].Signature = sig
+			return true
+		}
+	}
+	return false
+}
+
 func (tx *SendTx) String() string {
 	return fmt.Sprintf("SendTx{fee: %v, %v->%v}", tx.Fee, tx.Inputs, tx.Outputs)
 }
 
 func (tx *RametronStakeTx) String() string {
 	return fmt.Sprintf("RametronStakeTx{fee: %v, %v->%v}", tx.Fee, tx.Inputs, tx.Outputs)
+}
+
+func (tx *WithdrawRametronStakeTx) String() string {
+	return fmt.Sprintf("WithdrawRametronStakeTx{fee: %v, %v->%v}", tx.Fee, tx.Inputs, tx.Outputs)
 }
 
 //-----------------------------------------------------------------------------

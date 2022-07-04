@@ -555,6 +555,175 @@ func TestRametronStakeTxProto(t *testing.T) {
 	assert.Equal(tx.Inputs[0].Signature, tx2.Inputs[0].Signature)
 	assert.False(tx2.Inputs[0].Signature.IsEmpty())
 }
+
+//---------------------------WithdrawRametronStake ----------------
+
+func TestWithdrawRametronStakeTxSignable(t *testing.T) {
+	withdrawrametronStakeTx := &WithdrawRametronStakeTx{
+		Fee: Coins{PandoWei: big.NewInt(111), PTXWei: big.NewInt(0)},
+		Inputs: []TxInput{
+			TxInput{
+				Address:  getTestAddress("input1"),
+				Coins:    Coins{PandoWei: big.NewInt(12345)},
+				Sequence: 67890,
+			},
+			TxInput{
+				Address:  getTestAddress("input2"),
+				Coins:    Coins{PandoWei: big.NewInt(111), PTXWei: big.NewInt(0)},
+				Sequence: 222,
+			},
+		},
+		Outputs: []TxOutput{
+			TxOutput{
+				Address: getTestAddress("output1"),
+				Coins:   Coins{PandoWei: big.NewInt(333), PTXWei: big.NewInt(0)},
+			},
+			TxOutput{
+				Address: getTestAddress("output2"),
+				Coins:   Coins{PandoWei: big.NewInt(444), PTXWei: big.NewInt(0)},
+			},
+		},
+	}
+	signBytes := withdrawrametronStakeTx.SignBytes(chainID)
+	signBytesHex := fmt.Sprintf("%X", signBytes)
+	expected := "F8A180808094000000000000000000000000000000000000000080B8868A746573745F636861696E02F878C26F80F83CDF94696E707574310000000000000000000000000000C4823039808301093280DB94696E707574320000000000000000000000000000C26F8081DE80F6DA946F75747075743100000000000000000000000000C482014D80DA946F75747075743200000000000000000000000000C48201BC80"
+
+	assert.Equal(t, expected, signBytesHex,
+		"Got unexpected sign string for WithdrawRametronStakeTx. Expected:\n%v\nGot:\n%v", expected, signBytesHex)
+}
+
+func TestWithdrawRametronStakeTxSignable2(t *testing.T) {
+	chainID := "pandonet"
+	ten18 := new(big.Int).SetUint64(1000000000000000000) // 10^18
+	PandoWei := new(big.Int).Mul(new(big.Int).SetUint64(10), ten18)
+	PTXWei := new(big.Int).Mul(new(big.Int).SetUint64(20), ten18)
+	feeInPTXWei := new(big.Int).SetUint64(10000000000000000) // 10^12
+
+	senderAddr := common.HexToAddress("df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E")
+	receiverAddr := common.HexToAddress("df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E")
+	withdrawrametronStakeTx := &WithdrawRametronStakeTx{
+		Fee: Coins{PandoWei: big.NewInt(0), PTXWei: feeInPTXWei},
+		Inputs: []TxInput{
+			TxInput{
+				Address:  senderAddr,
+				Coins:    Coins{PandoWei: PandoWei, PTXWei: new(big.Int).Add(PTXWei, feeInPTXWei)},
+				Sequence: 2,
+			},
+		},
+		Outputs: []TxOutput{
+			TxOutput{
+				Address: receiverAddr,
+				Coins:   Coins{PandoWei: PandoWei, PTXWei: PTXWei},
+			},
+		},
+	}
+	signBytes := withdrawrametronStakeTx.SignBytes(chainID)
+	signBytesHex := hex.EncodeToString(signBytes)
+	expected := "f88980808094000000000000000000000000000000000000000080b86e8a707269766174656e657402f860c78085e8d4a51000eceb94df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785Ed3888ac7230489e800008901158e46f1e87510000280eae994df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785Ed3888ac7230489e800008901158e460913d00000"
+
+	assert.Equal(t, expected, signBytesHex,
+		"Got unexpected sign string for WithdrawRametronStakeTx. Expected:\n%v\nGot:\n%v", expected, signBytesHex)
+
+	t.Logf("Tx SignBytes            : %v", signBytesHex)
+
+	feeEncoded, _ := rlp.EncodeToBytes(withdrawrametronStakeTx.Fee)
+	t.Logf("withdrawrametronStakeTx.Fee              : %v", hex.EncodeToString(feeEncoded))
+
+	inputsEncoded, _ := rlp.EncodeToBytes(withdrawrametronStakeTx.Inputs)
+	t.Logf("withdrawrametronStakeTx.Inputs           : %v", hex.EncodeToString(inputsEncoded))
+
+	inputs0Encoded, _ := rlp.EncodeToBytes(withdrawrametronStakeTx.Inputs[0])
+	t.Logf("withdrawrametronStakeTx.Inputs[0]        : %v", hex.EncodeToString(inputs0Encoded))
+
+	inputs0CoinsEncoded, _ := rlp.EncodeToBytes(withdrawrametronStakeTx.Inputs[0].Coins)
+	t.Logf("withdrawrametronStakeTx.Inputs[0].Coins  : %v", hex.EncodeToString(inputs0CoinsEncoded))
+
+	inputs0AddrEncoded, _ := rlp.EncodeToBytes(withdrawrametronStakeTx.Inputs[0].Address)
+	t.Logf("withdrawrametronStakeTx.Inputs[0].Addr   : %v", hex.EncodeToString(inputs0AddrEncoded))
+
+	outputsEncoded, _ := rlp.EncodeToBytes(withdrawrametronStakeTx.Outputs)
+	t.Logf("withdrawrametronStakeTx.Outputs          : %v", hex.EncodeToString(outputsEncoded))
+
+	outputs0Encoded, _ := rlp.EncodeToBytes(withdrawrametronStakeTx.Outputs[0])
+	t.Logf("withdrawrametronStakeTx.Outputs[0]       : %v", hex.EncodeToString(outputs0Encoded))
+
+	outputs0CoinsEncoded, _ := rlp.EncodeToBytes(withdrawrametronStakeTx.Outputs[0].Coins)
+	t.Logf("withdrawrametronStakeTx.Outputs[0].Coins : %v", hex.EncodeToString(outputs0CoinsEncoded))
+
+	senderSkBytes, _ := hex.DecodeString("93a90ea508331dfdf27fb79757d4250b4e84954927ba0073cd67454ac432c737")
+	senderPrivKey, _ := crypto.PrivateKeyFromBytes(senderSkBytes)
+	senderSignature, _ := senderPrivKey.Sign(signBytes)
+
+	signBytesHash := crypto.Keccak256(signBytes)
+	t.Logf("signBytesHash : %v", hex.EncodeToString(signBytesHash))
+
+	withdrawrametronStakeTx.SetSignature(senderAddr, senderSignature)
+
+	raw, err := TxToBytes(withdrawrametronStakeTx)
+	if err != nil {
+		utils.Error("Failed to encode transaction: %v\n", err)
+	}
+	t.Logf("withdrawrametronStakeTx.Inputs[0].Signature : %v", hex.EncodeToString(senderSignature.ToBytes()))
+
+	signedTxBytesHex := hex.EncodeToString(raw)
+	t.Logf("Signed Tx: %v", signedTxBytesHex)
+
+	expectedSignedTxBytes := "02f8a4c78085e8d4a51000f86ff86d94df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785Ed3888ac7230489e800008901158e46f1e875100002b8415a6e9a2e93487c786f07175998493161e61a5d9613745aa0e2fe51e5db1eaf626f72bfae41d971e88ff3b2c217cf611c2addb266e7d7ebda29cb0e9e5a2f482800eae994df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785Ed3888ac7230489e800008901158e460913d00000"
+	assert.Equal(t, expectedSignedTxBytes, signedTxBytesHex,
+		"Got unexpected signed raw bytes for WithdrawRametronStakeTx. Expected:\n%v\nGot:\n%v", expectedSignedTxBytes, signedTxBytesHex)
+
+}
+
+func TestWithdrawRametronStakeTxProto(t *testing.T) {
+	assert, require := assert.New(t), require.New(t)
+
+	chainID := "test_chain_id"
+	test1PrivAcc := PrivAccountFromSecret("withdrawrametronStakeTx1")
+	test2PrivAcc := PrivAccountFromSecret("withdrawrametronStakeTx2")
+
+	// Construct a WithdrawRametronStakeTx signature
+	tx := &WithdrawRametronStakeTx{
+		Fee: Coins{PTXWei: big.NewInt(2)},
+		Inputs: []TxInput{
+			NewTxInput(test1PrivAcc.Address, Coins{PandoWei: big.NewInt(0), PTXWei: big.NewInt(10)}, 1),
+		},
+		Outputs: []TxOutput{
+			TxOutput{
+				Address: test2PrivAcc.Address,
+				Coins:   Coins{PandoWei: big.NewInt(0), PTXWei: big.NewInt(8)},
+			},
+		},
+	}
+
+	// serialize this and back
+	b, err := TxToBytes(tx)
+	require.Nil(err)
+	txs, err := TxFromBytes(b)
+	require.Nil(err)
+	tx2 := txs.(*WithdrawRametronStakeTx)
+
+	// make sure they are the same!
+	signBytes := tx.SignBytes(chainID)
+	signBytes2 := tx2.SignBytes(chainID)
+	assert.Equal(signBytes, signBytes2)
+
+	// sign this thing
+	sig := test1PrivAcc.Sign(signBytes)
+	// we handle both raw sig and wrapped sig the same
+	tx.SetSignature(test1PrivAcc.PrivKey.PublicKey().Address(), sig)
+	tx2.SetSignature(test1PrivAcc.PrivKey.PublicKey().Address(), sig)
+
+	b, err = TxToBytes(tx)
+	require.Nil(err)
+	txs, err = TxFromBytes(b)
+	require.Nil(err)
+	tx2 = txs.(*WithdrawRametronStakeTx)
+
+	// and make sure the sig is preserved
+	assert.Equal(tx.Inputs[0].Signature, tx2.Inputs[0].Signature)
+	assert.False(tx2.Inputs[0].Signature.IsEmpty())
+}
+
 func TestReserveFundTxSignable(t *testing.T) {
 	reserveFundTx := &ReserveFundTx{
 		Fee: Coins{PandoWei: Zero, PTXWei: big.NewInt(111)},

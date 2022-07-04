@@ -169,6 +169,10 @@ func (et *execTest) signRametronStakeTx(tx *types.RametronStakeTx, accsIn ...typ
 	types.SignRametronStakeTx(et.chainID, tx, accsIn...)
 }
 
+func (et *execTest) signWithdrawRametronStakeTx(tx *types.WithdrawRametronStakeTx, accsIn ...types.PrivAccount) {
+	types.SignWithdrawRametronStakeTx(et.chainID, tx, accsIn...)
+}
+
 func (et *execTest) state() *st.LedgerState {
 	return et.executor.state
 }
@@ -191,6 +195,22 @@ func (et *execTest) execSendTx(tx *types.SendTx, screenTx bool) (res result.Resu
 }
 
 func (et *execTest) execRametronStakeTx(tx *types.RametronStakeTx, screenTx bool) (res result.Result, inGot, inExp, outGot, outExp types.Coins) {
+	initBalIn := et.state().Delivered().GetAccount(et.accIn.Account.Address).Balance
+	initBalOut := et.state().Delivered().GetAccount(et.accOut.Account.Address).Balance
+
+	if screenTx {
+		_, res = et.executor.ScreenTx(tx)
+	} else {
+		_, res = et.executor.ExecuteTx(tx)
+	}
+
+	endBalIn := et.state().Delivered().GetAccount(et.accIn.Account.Address).Balance
+	endBalOut := et.state().Delivered().GetAccount(et.accOut.Account.Address).Balance
+	decrBalInExp := tx.Outputs[0].Coins.Plus(tx.Fee) //expected decrease in balance In
+	return res, endBalIn, initBalIn.Minus(decrBalInExp), endBalOut, initBalOut.Plus(tx.Outputs[0].Coins)
+}
+
+func (et *execTest) execWithdrawRametronStakeTx(tx *types.WithdrawRametronStakeTx, screenTx bool) (res result.Result, inGot, inExp, outGot, outExp types.Coins) {
 	initBalIn := et.state().Delivered().GetAccount(et.accIn.Account.Address).Balance
 	initBalOut := et.state().Delivered().GetAccount(et.accOut.Account.Address).Balance
 

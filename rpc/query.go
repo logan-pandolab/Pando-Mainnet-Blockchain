@@ -232,6 +232,7 @@ const (
 	TxTypeSlash
 	TxTypeSend
 	TxTypeRametronStake
+	TxTypeWithdrawRametronStake
 	TxTypeReserveFund
 	TxTypeReleaseFund
 	TxTypeServicePayment
@@ -651,6 +652,8 @@ func getTxType(tx types.Tx) byte {
 		t = TxTypeSend
 	case *types.RametronStakeTx:
 		t = TxTypeRametronStake
+	case *types.WithdrawRametronStakeTx:
+		t = TxTypeWithdrawRametronStake
 	case *types.ReserveFundTx:
 		t = TxTypeReserveFund
 	case *types.ReleaseFundTx:

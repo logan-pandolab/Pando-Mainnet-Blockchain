@@ -403,6 +403,66 @@ func TestRametronStakeDuplicatedInputOutput(t *testing.T) {
 	assert.Equal(accOutBal0, accOutBal1)
 }
 
+func TestWithdrawRametronStakeDuplicatedInputOutput(t *testing.T) {
+	assert := assert.New(t)
+	et := NewExecTest()
+
+	et.acc2State(et.accIn)
+	et.acc2State(et.accOut)
+
+	fee := types.NewCoins(0, getMinimumTxFee())
+	c1 := types.NewCoins(20000, 0)
+	c2 := types.NewCoins(50000, 3000)
+	withdrawrametronStakeTx := &types.WithdrawRametronStakeTx{
+		Fee: fee,
+		Inputs: []types.TxInput{
+			types.TxInput{
+				Address:  et.accIn.Address,
+				Coins:    c1.Plus(fee),
+				Sequence: et.accIn.Sequence + 1,
+			},
+			types.TxInput{
+				Address:  et.accOut.Address,
+				Coins:    c2,
+				Sequence: et.accOut.Sequence + 1,
+			},
+		},
+		Outputs: []types.TxOutput{
+			types.TxOutput{
+				Address: et.accIn.Address,
+				Coins:   c1,
+			},
+			types.TxOutput{
+				Address: et.accOut.Address,
+				Coins:   c2,
+			},
+		},
+	}
+
+	// Sign transaction
+	signBytes := withdrawrametronStakeTx.SignBytes(et.chainID)
+	withdrawrametronStakeTx.Inputs[0].Signature = et.accIn.Sign(signBytes)
+	withdrawrametronStakeTx.Inputs[1].Signature = et.accOut.Sign(signBytes)
+
+	accInBal0 := et.accIn.Balance
+	accOutBal0 := et.accOut.Balance
+	t.Logf("----- Before executing WithdrawRametronStakeTx -----\n")
+	t.Logf("accIn.Balance  = %v\n", accInBal0)
+	t.Logf("accOut.Balance = %v\n", accOutBal0)
+
+	res, _, _, _, _ := et.execWithdrawRametronStakeTx(withdrawrametronStakeTx, true)
+	assert.False(res.IsOK(), "ExecTx/Good CheckTx: Expected OK return from ExecTx, Error: %v", res)
+	et.executor.state.Commit()
+
+	accInBal1 := et.executor.state.Delivered().GetAccount(et.accIn.Address).Balance
+	accOutBal1 := et.executor.state.Delivered().GetAccount(et.accOut.Address).Balance
+	t.Logf("----- After executing WithdrawRametronStakeTx -----\n")
+	t.Logf("accIn.Balance  = %v\n", accInBal1)
+	t.Logf("accOut.Balance = %v\n", accOutBal1)
+
+	assert.Equal(accInBal0, accInBal1)
+	assert.Equal(accOutBal0, accOutBal1)
+}
 // func TestCalculatePandoReward(t *testing.T) {
 // 	assert := assert.New(t)
 
