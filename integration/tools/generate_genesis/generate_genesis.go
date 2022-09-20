@@ -146,7 +146,7 @@ func loadInitialBalances(erc20SnapshotJSONFilePath string) *state.StoreView {
 			CodeHash: types.EmptyCodeHash,
 			Balance: types.Coins{
 				PandoWei: pando,
-				PTXWei:   ptx,
+				PTXWei: ptx,
 			},
 		}
 		sv.SetAccount(acc.Address, acc)
@@ -188,14 +188,14 @@ func performInitialStakeDeposit(stakeDepositFilePath string, genesisHeight uint6
 			panic(fmt.Sprintf("The source account %v does NOT have sufficient balance for stake deposit. PandoWeiBalance = %v, StakeAmount = %v",
 				sourceAddress, sourceAccount.Balance.PandoWei, stakeDeposit.Amount))
 		}
-		err := vcp.DepositStake(sourceAddress, holderAddress, stakeAmount)
+		err := vcp.DepositStake(sourceAddress, holderAddress, stakeAmount, genesisHeight)
 		if err != nil {
 			panic(fmt.Sprintf("Failed to deposit stake, err: %v", err))
 		}
 
 		stake := types.Coins{
 			PandoWei: stakeAmount,
-			PTXWei:   new(big.Int).SetUint64(0),
+			PTXWei: new(big.Int).SetUint64(0),
 		}
 		sourceAccount.Balance = sourceAccount.Balance.Minus(stake)
 		sv.SetAccount(sourceAddress, sourceAccount)
@@ -254,8 +254,8 @@ func writeStoreView(sv *state.StoreView, needAccountStorage bool, writer *bufio.
 }
 
 func sanityChecks(sv *state.StoreView) error {
-	PandoWeiTotal := new(big.Int).SetUint64(0)
-	PTXWeiTotal := new(big.Int).SetUint64(0)
+	pandoWeiTotal := new(big.Int).SetUint64(0)
+	ptxWeiTotal := new(big.Int).SetUint64(0)
 
 	vcpAnalyzed := false
 	sv.GetStore().Traverse(nil, func(key, val common.Bytes) bool {
@@ -269,7 +269,7 @@ func sanityChecks(sv *state.StoreView) error {
 				logger.Infof("--------------------------------------------------------")
 				logger.Infof("Validator Candidate: %v, totalStake  = %v", sc.Holder, sc.TotalStake())
 				for _, stake := range sc.Stakes {
-					PandoWeiTotal = new(big.Int).Add(PandoWeiTotal, stake.Amount)
+					pandoWeiTotal = new(big.Int).Add(pandoWeiTotal, stake.Amount)
 					logger.Infof("     Stake: source = %v, stakeAmount = %v", stake.Source, stake.Amount)
 				}
 				logger.Infof("--------------------------------------------------------")
@@ -294,12 +294,12 @@ func sanityChecks(sv *state.StoreView) error {
 				panic(fmt.Sprintf("Failed to decode Account: %v", err))
 			}
 
-			PandoWei := account.Balance.PandoWei
-			PTXWei := account.Balance.PTXWei
-			PandoWeiTotal = new(big.Int).Add(PandoWeiTotal, PandoWei)
-			PTXWeiTotal = new(big.Int).Add(PTXWeiTotal, PTXWei)
+			pandoWei := account.Balance.PandoWei
+			ptxWei := account.Balance.PTXWei
+			pandoWeiTotal = new(big.Int).Add(pandoWeiTotal, pandoWei)
+			ptxWeiTotal = new(big.Int).Add(ptxWeiTotal, ptxWei)
 
-			logger.Infof("Account: %v, PandoWei = %v, PTXWei = %v", account.Address, PandoWei, PTXWei)
+			logger.Infof("Account: %v, PandoWei = %v, PTXWei = %v", account.Address, pandoWei, ptxWei)
 		}
 		return true
 	})
@@ -318,24 +318,24 @@ func sanityChecks(sv *state.StoreView) error {
 	}
 
 	// Check #2: Sum(PandoWei) + Sum(Stake) == 1 * 10^9 * 10^18
-	oneBillion := new(big.Int).SetUint64(120000000)
+	oneBillion := new(big.Int).SetUint64(30000000)
 	fiveBillion := new(big.Int).Mul(new(big.Int).SetUint64(5), oneBillion)
 	ten18 := new(big.Int).SetUint64(1000000000000000000)
 
 	expectedPandoWeiTotal := new(big.Int).Mul(oneBillion, ten18)
-	if expectedPandoWeiTotal.Cmp(PandoWeiTotal) != 0 {
-		return fmt.Errorf("Unmatched PandoWei total: expected = %v, calculated = %v", expectedPandoWeiTotal, PandoWeiTotal)
+	if expectedPandoWeiTotal.Cmp(pandoWeiTotal) != 0 {
+		return fmt.Errorf("Unmatched PandoWei total: expected = %v, calculated = %v", expectedPandoWeiTotal, pandoWeiTotal)
 	}
 	logger.Infof("Expected   PandoWei total = %v", expectedPandoWeiTotal)
-	logger.Infof("Calculated PandoWei total = %v", PandoWeiTotal)
+	logger.Infof("Calculated PandoWei total = %v", pandoWeiTotal)
 
 	// Check #3: Sum(PTXWei) == 5 * 10^9 * 10^18
 	expectedPTXWeiTotal := new(big.Int).Mul(fiveBillion, ten18)
-	if expectedPTXWeiTotal.Cmp(PTXWeiTotal) != 0 {
-		return fmt.Errorf("Unmatched PTXWei total: expected = %v, calculated = %v", expectedPTXWeiTotal, PTXWeiTotal)
+	if expectedPTXWeiTotal.Cmp(ptxWeiTotal) != 0 {
+		return fmt.Errorf("Unmatched PTXWei total: expected = %v, calculated = %v", expectedPTXWeiTotal, ptxWeiTotal)
 	}
 	logger.Infof("Expected   PTXWei total = %v", expectedPTXWeiTotal)
-	logger.Infof("Calculated PTXWei total = %v", PTXWeiTotal)
+	logger.Infof("Calculated PTXWei total = %v", ptxWeiTotal)
 
 	return nil
 }

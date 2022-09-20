@@ -8,12 +8,12 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/pandotoken/pando/cmd/pandocli/cmd/utils"
 	"github.com/pandotoken/pando/common"
 	"github.com/pandotoken/pando/crypto"
 	"github.com/pandotoken/pando/rlp"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var chainID string = "test_chain"
@@ -259,31 +259,31 @@ func TestSendTxSignable(t *testing.T) {
 func TestSendTxSignable2(t *testing.T) {
 	chainID := "pandonet"
 	ten18 := new(big.Int).SetUint64(1000000000000000000) // 10^18
-	PandoWei := new(big.Int).Mul(new(big.Int).SetUint64(10), ten18)
-	PTXWei := new(big.Int).Mul(new(big.Int).SetUint64(20), ten18)
-	feeInPTXWei := new(big.Int).SetUint64(10000000000000000) // 10^12
+	pandoWei := new(big.Int).Mul(new(big.Int).SetUint64(10), ten18)
+	ptxWei := new(big.Int).Mul(new(big.Int).SetUint64(20), ten18)
+	feeInPTXWei := new(big.Int).SetUint64(1000000000000) // 10^12
 
-	senderAddr := common.HexToAddress("df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E")
-	receiverAddr := common.HexToAddress("df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E")
+	senderAddr := common.HexToAddress("2E833968E5bB786Ae419c4d13189fB081Cc43bab")
+	receiverAddr := common.HexToAddress("9F1233798E905E173560071255140b4A8aBd3Ec6")
 	sendTx := &SendTx{
 		Fee: Coins{PandoWei: big.NewInt(0), PTXWei: feeInPTXWei},
 		Inputs: []TxInput{
 			TxInput{
 				Address:  senderAddr,
-				Coins:    Coins{PandoWei: PandoWei, PTXWei: new(big.Int).Add(PTXWei, feeInPTXWei)},
+				Coins:    Coins{PandoWei: pandoWei, PTXWei: new(big.Int).Add(ptxWei, feeInPTXWei)},
 				Sequence: 2,
 			},
 		},
 		Outputs: []TxOutput{
 			TxOutput{
 				Address: receiverAddr,
-				Coins:   Coins{PandoWei: PandoWei, PTXWei: PTXWei},
+				Coins:   Coins{PandoWei: pandoWei, PTXWei: ptxWei},
 			},
 		},
 	}
 	signBytes := sendTx.SignBytes(chainID)
 	signBytesHex := hex.EncodeToString(signBytes)
-	expected := "f88980808094000000000000000000000000000000000000000080b86e8a707269766174656e657402f860c78085e8d4a51000eceb94df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785Ed3888ac7230489e800008901158e46f1e87510000280eae994df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785Ed3888ac7230489e800008901158e460913d00000"
+	expected := "f88980808094000000000000000000000000000000000000000080b86e8a707269766174656e657402f860c78085e8d4a51000eceb942e833968e5bb786ae419c4d13189fb081cc43babd3888ac7230489e800008901158e46f1e87510000280eae9949f1233798e905e173560071255140b4a8abd3ec6d3888ac7230489e800008901158e460913d00000"
 
 	assert.Equal(t, expected, signBytesHex,
 		"Got unexpected sign string for SendTx. Expected:\n%v\nGot:\n%v", expected, signBytesHex)
@@ -332,7 +332,7 @@ func TestSendTxSignable2(t *testing.T) {
 	signedTxBytesHex := hex.EncodeToString(raw)
 	t.Logf("Signed Tx: %v", signedTxBytesHex)
 
-	expectedSignedTxBytes := "02f8a4c78085e8d4a51000f86ff86d94df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785Ed3888ac7230489e800008901158e46f1e875100002b8415a6e9a2e93487c786f07175998493161e61a5d9613745aa0e2fe51e5db1eaf626f72bfae41d971e88ff3b2c217cf611c2addb266e7d7ebda29cb0e9e5a2f482800eae994df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785Ed3888ac7230489e800008901158e460913d00000"
+	expectedSignedTxBytes := "02f8a4c78085e8d4a51000f86ff86d942e833968e5bb786ae419c4d13189fb081cc43babd3888ac7230489e800008901158e46f1e875100002b8415a6e9a2e93487c786f07175998493161e61a5d9613745aa0e2fe51e5db1eaf626f72bfae41d971e88ff3b2c217cf611c2addb266e7d7ebda29cb0e9e5a2f482800eae9949f1233798e905e173560071255140b4a8abd3ec6d3888ac7230489e800008901158e460913d00000"
 	assert.Equal(t, expectedSignedTxBytes, signedTxBytesHex,
 		"Got unexpected signed raw bytes for SendTx. Expected:\n%v\nGot:\n%v", expectedSignedTxBytes, signedTxBytesHex)
 
@@ -388,7 +388,7 @@ func TestSendTxProto(t *testing.T) {
 	assert.False(tx2.Inputs[0].Signature.IsEmpty())
 }
 
-//---------------------------RametronStake ----------------
+//------------------------ Rametron -----------------------------------
 
 func TestRametronStakeTxSignable(t *testing.T) {
 	rametronStakeTx := &RametronStakeTx{
@@ -427,31 +427,31 @@ func TestRametronStakeTxSignable(t *testing.T) {
 func TestRametronStakeTxSignable2(t *testing.T) {
 	chainID := "pandonet"
 	ten18 := new(big.Int).SetUint64(1000000000000000000) // 10^18
-	PandoWei := new(big.Int).Mul(new(big.Int).SetUint64(10), ten18)
-	PTXWei := new(big.Int).Mul(new(big.Int).SetUint64(20), ten18)
-	feeInPTXWei := new(big.Int).SetUint64(10000000000000000) // 10^12
+	pandoWei := new(big.Int).Mul(new(big.Int).SetUint64(10), ten18)
+	ptxWei := new(big.Int).Mul(new(big.Int).SetUint64(20), ten18)
+	feeInPTXWei := new(big.Int).SetUint64(1000000000000) // 10^12
 
-	senderAddr := common.HexToAddress("df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E")
-	receiverAddr := common.HexToAddress("df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E")
+	senderAddr := common.HexToAddress("2E833968E5bB786Ae419c4d13189fB081Cc43bab")
+	receiverAddr := common.HexToAddress("9F1233798E905E173560071255140b4A8aBd3Ec6")
 	rametronStakeTx := &RametronStakeTx{
 		Fee: Coins{PandoWei: big.NewInt(0), PTXWei: feeInPTXWei},
 		Inputs: []TxInput{
 			TxInput{
 				Address:  senderAddr,
-				Coins:    Coins{PandoWei: PandoWei, PTXWei: new(big.Int).Add(PTXWei, feeInPTXWei)},
+				Coins:    Coins{PandoWei: pandoWei, PTXWei: new(big.Int).Add(ptxWei, feeInPTXWei)},
 				Sequence: 2,
 			},
 		},
 		Outputs: []TxOutput{
 			TxOutput{
 				Address: receiverAddr,
-				Coins:   Coins{PandoWei: PandoWei, PTXWei: PTXWei},
+				Coins:   Coins{PandoWei: pandoWei, PTXWei: ptxWei},
 			},
 		},
 	}
 	signBytes := rametronStakeTx.SignBytes(chainID)
 	signBytesHex := hex.EncodeToString(signBytes)
-	expected := "f88980808094000000000000000000000000000000000000000080b86e8a707269766174656e657402f860c78085e8d4a51000eceb94df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785Ed3888ac7230489e800008901158e46f1e87510000280eae994df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785Ed3888ac7230489e800008901158e460913d00000"
+	expected := "f88980808094000000000000000000000000000000000000000080b86e8a707269766174656e657402f860c78085e8d4a51000eceb942e833968e5bb786ae419c4d13189fb081cc43babd3888ac7230489e800008901158e46f1e87510000280eae9949f1233798e905e173560071255140b4a8abd3ec6d3888ac7230489e800008901158e460913d00000"
 
 	assert.Equal(t, expected, signBytesHex,
 		"Got unexpected sign string for RametronStakeTx. Expected:\n%v\nGot:\n%v", expected, signBytesHex)
@@ -500,7 +500,7 @@ func TestRametronStakeTxSignable2(t *testing.T) {
 	signedTxBytesHex := hex.EncodeToString(raw)
 	t.Logf("Signed Tx: %v", signedTxBytesHex)
 
-	expectedSignedTxBytes := "02f8a4c78085e8d4a51000f86ff86d94df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785Ed3888ac7230489e800008901158e46f1e875100002b8415a6e9a2e93487c786f07175998493161e61a5d9613745aa0e2fe51e5db1eaf626f72bfae41d971e88ff3b2c217cf611c2addb266e7d7ebda29cb0e9e5a2f482800eae994df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785Ed3888ac7230489e800008901158e460913d00000"
+	expectedSignedTxBytes := "02f8a4c78085e8d4a51000f86ff86d942e833968e5bb786ae419c4d13189fb081cc43babd3888ac7230489e800008901158e46f1e875100002b8415a6e9a2e93487c786f07175998493161e61a5d9613745aa0e2fe51e5db1eaf626f72bfae41d971e88ff3b2c217cf611c2addb266e7d7ebda29cb0e9e5a2f482800eae9949f1233798e905e173560071255140b4a8abd3ec6d3888ac7230489e800008901158e460913d00000"
 	assert.Equal(t, expectedSignedTxBytes, signedTxBytesHex,
 		"Got unexpected signed raw bytes for RametronStakeTx. Expected:\n%v\nGot:\n%v", expectedSignedTxBytes, signedTxBytesHex)
 
@@ -510,8 +510,8 @@ func TestRametronStakeTxProto(t *testing.T) {
 	assert, require := assert.New(t), require.New(t)
 
 	chainID := "test_chain_id"
-	test1PrivAcc := PrivAccountFromSecret("rametronStakeTx1")
-	test2PrivAcc := PrivAccountFromSecret("rametronStakeTx2")
+	test1PrivAcc := PrivAccountFromSecret("rametronStaketx1")
+	test2PrivAcc := PrivAccountFromSecret("rametronStaketx2")
 
 	// Construct a RametronStakeTx signature
 	tx := &RametronStakeTx{
@@ -556,7 +556,7 @@ func TestRametronStakeTxProto(t *testing.T) {
 	assert.False(tx2.Inputs[0].Signature.IsEmpty())
 }
 
-//---------------------------WithdrawRametronStake ----------------
+//------------------------Rametron Withdraw ------------------------------
 
 func TestWithdrawRametronStakeTxSignable(t *testing.T) {
 	withdrawrametronStakeTx := &WithdrawRametronStakeTx{
@@ -595,31 +595,31 @@ func TestWithdrawRametronStakeTxSignable(t *testing.T) {
 func TestWithdrawRametronStakeTxSignable2(t *testing.T) {
 	chainID := "pandonet"
 	ten18 := new(big.Int).SetUint64(1000000000000000000) // 10^18
-	PandoWei := new(big.Int).Mul(new(big.Int).SetUint64(10), ten18)
-	PTXWei := new(big.Int).Mul(new(big.Int).SetUint64(20), ten18)
-	feeInPTXWei := new(big.Int).SetUint64(10000000000000000) // 10^12
+	pandoWei := new(big.Int).Mul(new(big.Int).SetUint64(10), ten18)
+	ptxWei := new(big.Int).Mul(new(big.Int).SetUint64(20), ten18)
+	feeInPTXWei := new(big.Int).SetUint64(1000000000000) // 10^12
 
-	senderAddr := common.HexToAddress("df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E")
-	receiverAddr := common.HexToAddress("df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E")
+	senderAddr := common.HexToAddress("2E833968E5bB786Ae419c4d13189fB081Cc43bab")
+	receiverAddr := common.HexToAddress("9F1233798E905E173560071255140b4A8aBd3Ec6")
 	withdrawrametronStakeTx := &WithdrawRametronStakeTx{
 		Fee: Coins{PandoWei: big.NewInt(0), PTXWei: feeInPTXWei},
 		Inputs: []TxInput{
 			TxInput{
 				Address:  senderAddr,
-				Coins:    Coins{PandoWei: PandoWei, PTXWei: new(big.Int).Add(PTXWei, feeInPTXWei)},
+				Coins:    Coins{PandoWei: pandoWei, PTXWei: new(big.Int).Add(ptxWei, feeInPTXWei)},
 				Sequence: 2,
 			},
 		},
 		Outputs: []TxOutput{
 			TxOutput{
 				Address: receiverAddr,
-				Coins:   Coins{PandoWei: PandoWei, PTXWei: PTXWei},
+				Coins:   Coins{PandoWei: pandoWei, PTXWei: ptxWei},
 			},
 		},
 	}
 	signBytes := withdrawrametronStakeTx.SignBytes(chainID)
 	signBytesHex := hex.EncodeToString(signBytes)
-	expected := "f88980808094000000000000000000000000000000000000000080b86e8a707269766174656e657402f860c78085e8d4a51000eceb94df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785Ed3888ac7230489e800008901158e46f1e87510000280eae994df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785Ed3888ac7230489e800008901158e460913d00000"
+	expected := "f88980808094000000000000000000000000000000000000000080b86e8a707269766174656e657402f860c78085e8d4a51000eceb942e833968e5bb786ae419c4d13189fb081cc43babd3888ac7230489e800008901158e46f1e87510000280eae9949f1233798e905e173560071255140b4a8abd3ec6d3888ac7230489e800008901158e460913d00000"
 
 	assert.Equal(t, expected, signBytesHex,
 		"Got unexpected sign string for WithdrawRametronStakeTx. Expected:\n%v\nGot:\n%v", expected, signBytesHex)
@@ -668,7 +668,7 @@ func TestWithdrawRametronStakeTxSignable2(t *testing.T) {
 	signedTxBytesHex := hex.EncodeToString(raw)
 	t.Logf("Signed Tx: %v", signedTxBytesHex)
 
-	expectedSignedTxBytes := "02f8a4c78085e8d4a51000f86ff86d94df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785Ed3888ac7230489e800008901158e46f1e875100002b8415a6e9a2e93487c786f07175998493161e61a5d9613745aa0e2fe51e5db1eaf626f72bfae41d971e88ff3b2c217cf611c2addb266e7d7ebda29cb0e9e5a2f482800eae994df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785Ed3888ac7230489e800008901158e460913d00000"
+	expectedSignedTxBytes := "02f8a4c78085e8d4a51000f86ff86d942e833968e5bb786ae419c4d13189fb081cc43babd3888ac7230489e800008901158e46f1e875100002b8415a6e9a2e93487c786f07175998493161e61a5d9613745aa0e2fe51e5db1eaf626f72bfae41d971e88ff3b2c217cf611c2addb266e7d7ebda29cb0e9e5a2f482800eae9949f1233798e905e173560071255140b4a8abd3ec6d3888ac7230489e800008901158e460913d00000"
 	assert.Equal(t, expectedSignedTxBytes, signedTxBytesHex,
 		"Got unexpected signed raw bytes for WithdrawRametronStakeTx. Expected:\n%v\nGot:\n%v", expectedSignedTxBytes, signedTxBytesHex)
 
@@ -678,8 +678,8 @@ func TestWithdrawRametronStakeTxProto(t *testing.T) {
 	assert, require := assert.New(t), require.New(t)
 
 	chainID := "test_chain_id"
-	test1PrivAcc := PrivAccountFromSecret("withdrawrametronStakeTx1")
-	test2PrivAcc := PrivAccountFromSecret("withdrawrametronStakeTx2")
+	test1PrivAcc := PrivAccountFromSecret("withdrawrametronStaketx1")
+	test2PrivAcc := PrivAccountFromSecret("withdrawrametronStaketx2")
 
 	// Construct a WithdrawRametronStakeTx signature
 	tx := &WithdrawRametronStakeTx{
@@ -723,6 +723,7 @@ func TestWithdrawRametronStakeTxProto(t *testing.T) {
 	assert.Equal(tx.Inputs[0].Signature, tx2.Inputs[0].Signature)
 	assert.False(tx2.Inputs[0].Signature.IsEmpty())
 }
+//------------------------------------------------------
 
 func TestReserveFundTxSignable(t *testing.T) {
 	reserveFundTx := &ReserveFundTx{
@@ -1123,4 +1124,3 @@ func TestSmartContractTxJSON(t *testing.T) {
 	assert.Equal(uint64(math.MaxUint64), d.GasLimit)
 	assert.Equal(0, gasPrice.Cmp(d.GasPrice))
 }
-

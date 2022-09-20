@@ -1,11 +1,19 @@
 package types
 
+import (
+	"math/big"
+
+	"github.com/pandotoken/pando/common"
+)
+
 const (
 	// DenomPandoWei is the basic unit of pando, 1 Pando = 10^18 PandoWei
 	DenomPandoWei string = "PandoWei"
 
 	// DenomPTXWei is the basic unit of pando, 1 Pando = 10^18 PandoWei
 	DenomPTXWei string = "PTXWei"
+
+	// Initial gas parameters
 
 	// MinimumGasPrice is the minimum gas price for a smart contract transaction
 	MinimumGasPrice uint64 = 1e8
@@ -16,6 +24,17 @@ const (
 
 	// MinimumTransactionFeePTXWei specifies the minimum fee for a regular transaction
 	MinimumTransactionFeePTXWei uint64 = 1e12
+
+	// June 2021 gas burn adjustment
+
+	// MinimumGasPrice is the minimum gas price for a smart contract transaction
+	MinimumGasPriceJune2021 uint64 = 1e8
+
+	// MaximumTxGasLimit is the maximum gas limit for a smart contract transaction
+	MaximumTxGasLimitJune2021 uint64 = 10e6
+
+	// MinimumTransactionFeePTXWei specifies the minimum fee for a regular transaction
+	MinimumTransactionFeePTXWeiJune2021 uint64 = 1e12
 
 	// MaxAccountsAffectedPerTx specifies the max number of accounts one transaction is allowed to modify to avoid spamming
 	MaxAccountsAffectedPerTx = 512
@@ -72,3 +91,44 @@ const (
 	// ReservedFundFreezePeriodDuration indicates the freeze duration (in terms of number of blocks) of the reserved fund
 	ReservedFundFreezePeriodDuration uint64 = 5
 )
+
+func GetMinimumGasPrice(blockHeight uint64) *big.Int {
+	if blockHeight < common.HeightJune2021FeeAdjustment {
+		return new(big.Int).SetUint64(MinimumGasPrice)
+	}
+
+	return new(big.Int).SetUint64(MinimumGasPriceJune2021)
+}
+
+func GetMaxGasLimit(blockHeight uint64) *big.Int {
+	if blockHeight < common.HeightJune2021FeeAdjustment {
+		return new(big.Int).SetUint64(MaximumTxGasLimit)
+	}
+
+	return new(big.Int).SetUint64(MaximumTxGasLimitJune2021)
+}
+
+func GetMinimumTransactionFeePTXWei(blockHeight uint64) *big.Int {
+	if blockHeight < common.HeightJune2021FeeAdjustment {
+		return new(big.Int).SetUint64(MinimumTransactionFeePTXWei)
+	}
+
+	return new(big.Int).SetUint64(MinimumTransactionFeePTXWeiJune2021)
+}
+
+// Special handling for many-to-many SendTx
+func GetSendTxMinimumTransactionFeePTXWei(numAccountsAffected uint64, blockHeight uint64) *big.Int {
+	if blockHeight < common.HeightJune2021FeeAdjustment {
+		return new(big.Int).SetUint64(MinimumTransactionFeePTXWei) // backward compatiblity
+	}
+
+	if numAccountsAffected < 2 {
+		numAccountsAffected = 2
+	}
+
+	// minSendTxFee = numAccountsAffected * MinimumTransactionFeePTXWeiJune2021 / 2
+	minSendTxFee := big.NewInt(1).Mul(new(big.Int).SetUint64(numAccountsAffected), new(big.Int).SetUint64(MinimumTransactionFeePTXWeiJune2021))
+	minSendTxFee = big.NewInt(1).Div(minSendTxFee, new(big.Int).SetUint64(2))
+
+	return minSendTxFee
+}

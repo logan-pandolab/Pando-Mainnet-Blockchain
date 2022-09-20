@@ -9,7 +9,7 @@ import (
 	pandocli "github.com/pandotoken/pando/cmd/pandocli/cmd"
 )
 
-func generatepandocliDoc(filePrepender, linkHandler func(string) string) {
+func generatePandoCLIDoc(filePrepender, linkHandler func(string) string) {
 	var all = pandocli.RootCmd
 	err := doc.GenMarkdownTreeCustom(all, "./wallet/", filePrepender, linkHandler)
 	if err != nil {
@@ -34,7 +34,7 @@ func main() {
 		return strings.ToLower(name)
 	}
 
-	generatepandocliDoc(filePrepender, linkHandler)
+	generatePandoCLIDoc(filePrepender, linkHandler)
 	generatePandoDoc(filePrepender, linkHandler)
 	Walk()
 }

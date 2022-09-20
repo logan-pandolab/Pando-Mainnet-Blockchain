@@ -17,14 +17,17 @@ var _ TxExecutor = (*WithdrawRametronStakeTxExecutor)(nil)
 
 // WithdrawRametronStakeTxExecutor implements the TxExecutor interface
 type WithdrawRametronStakeTxExecutor struct {
+	state *st.LedgerState
 }
 
-// NewWithdrawRametronStakeTxExecutor creates a new instance of WithdrawRametronStakeTxExecutor
-func NewWithdrawRametronStakeTxExecutor() *WithdrawRametronStakeTxExecutor {
-	return &WithdrawRametronStakeTxExecutor{}
+// NewSendTxExecutor creates a new instance of WithdrawRametronStakeTxExecutor
+func NewWithdrawRametronStakeTxExecutor(state *st.LedgerState) *WithdrawRametronStakeTxExecutor {
+	return &WithdrawRametronStakeTxExecutor{
+		state: state,
+	}
 }
 
-func (exec *WithdrawRametronStakeTxExecutor) sanityCheck(chainID string, view *st.StoreView, transaction types.Tx) result.Result {
+func (exec *WithdrawRametronStakeTxExecutor) sanityCheck(chainID string, view *st.StoreView, viewSel core.ViewSelector, transaction types.Tx) result.Result {
 	tx := transaction.(*types.WithdrawRametronStakeTx)
 
 	// Validate inputs and outputs, basic
@@ -71,14 +74,14 @@ func (exec *WithdrawRametronStakeTxExecutor) sanityCheck(chainID string, view *s
 
 	// Validate inputs and outputs, advanced
 	signBytes := tx.SignBytes(chainID)
-	inTotal, res := validateInputsAdvanced(accounts, signBytes, tx.Inputs)
+	inTotal, res := validateInputsAdvanced(accounts, signBytes, tx.Inputs, blockHeight)
 	if res.IsError() {
 		return res
 	}
 
-	if !sanityCheckForFee(tx.Fee) {
+	if minTxFee, success := sanityCheckForSendTxFee(tx.Fee, numAccountsAffected, blockHeight); !success {
 		return result.Error("Insufficient fee. Transaction fee needs to be at least %v PTXWei",
-			types.MinimumTransactionFeePTXWei).WithErrorCode(result.CodeInvalidFee)
+			minTxFee).WithErrorCode(result.CodeInvalidFee)
 	}
 
 	outTotal := sumOutputs(tx.Outputs)
@@ -91,7 +94,7 @@ func (exec *WithdrawRametronStakeTxExecutor) sanityCheck(chainID string, view *s
 	return result.OK
 }
 
-func (exec *WithdrawRametronStakeTxExecutor) process(chainID string, view *st.StoreView, transaction types.Tx) (common.Hash, result.Result) {
+func (exec *WithdrawRametronStakeTxExecutor) process(chainID string, view *st.StoreView, viewSel core.ViewSelector, transaction types.Tx) (common.Hash, result.Result) {
 	tx := transaction.(*types.WithdrawRametronStakeTx)
 
 	accounts, res := getInputs(view, tx.Inputs)
@@ -124,12 +127,13 @@ func (exec *WithdrawRametronStakeTxExecutor) calculateEffectiveGasPrice(transact
 	tx := transaction.(*types.WithdrawRametronStakeTx)
 	fee := tx.Fee
 	numAccountsAffected := uint64(len(tx.Inputs) + len(tx.Outputs))
-	gasUint64 := types.GasSendTxPerAccount * numAccountsAffected
-	if gasUint64 < 2*types.GasSendTxPerAccount {
-		gasUint64 = 2 * types.GasSendTxPerAccount // to prevent spamming with invalid transactions, e.g. empty inputs/outputs
+
+	gasSendTxPerAccount := getRegularTxGas(exec.state) / 2
+	gasUint64 := gasSendTxPerAccount * numAccountsAffected
+	if gasUint64 < 2*gasSendTxPerAccount {
+		gasUint64 = 2 * gasSendTxPerAccount // to prevent spamming with invalid transactions, e.g. empty inputs/outputs
 	}
 	gas := new(big.Int).SetUint64(gasUint64)
 	effectiveGasPrice := new(big.Int).Div(fee.PTXWei, gas)
 	return effectiveGasPrice
 }
-

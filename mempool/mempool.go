@@ -221,7 +221,7 @@ func (mp *Mempool) InsertTransaction(rawTx common.Bytes) error {
 		}
 		mp.candidateTxs.Push(txGroup)
 		logger.Debugf("rawTx: %v, txInfo: %v", hex.EncodeToString(rawTx), txInfo)
-		//logger.Infof("Insert tx, tx.hash: 0x%v", getTransactionHash(rawTx))
+		logger.Infof("Insert tx, tx.hash: 0x%v", getTransactionHash(rawTx))
 		mp.size++
 
 		return nil
@@ -454,4 +454,3 @@ func (mp *Mempool) BroadcastTxUnsafe(tx common.Bytes) {
 	peerIDs := []string{}
 	mp.dispatcher.SendData(peerIDs, data)
 }
-

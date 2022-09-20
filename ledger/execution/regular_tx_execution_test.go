@@ -5,11 +5,11 @@ import (
 	"math/big"
 	"testing"
 
+	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/pandotoken/pando/common"
 	"github.com/pandotoken/pando/common/result"
 	"github.com/pandotoken/pando/ledger/types"
-	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestGetInputs(t *testing.T) {
@@ -134,12 +134,12 @@ func TestValidateInputsAdvanced(t *testing.T) {
 	signBytes := tx.SignBytes(et.chainID)
 
 	//test bad case, unsigned
-	totalCoins, res := validateInputsAdvanced(accMap, signBytes, tx.Inputs)
+	totalCoins, res := validateInputsAdvanced(accMap, signBytes, tx.Inputs, 1)
 	assert.True(res.IsError(), "validateInputsAdvanced: expected an error on an unsigned tx input")
 
 	//test good case sgined
 	et.signSendTx(tx, accIn1, accIn2, accIn3, et.accOut)
-	totalCoins, res = validateInputsAdvanced(accMap, signBytes, tx.Inputs)
+	totalCoins, res = validateInputsAdvanced(accMap, signBytes, tx.Inputs, 1)
 	assert.True(res.IsOK(), "validateInputsAdvanced: expected no error on good tx input. Error: %v", res.Message)
 
 	txTotalCoins := tx.Inputs[0].Coins.
@@ -161,25 +161,25 @@ func TestValidateInputAdvanced(t *testing.T) {
 	signBytes := tx.SignBytes(et.chainID)
 
 	//unsigned case
-	res := validateInputAdvanced(&et.accIn.Account, signBytes, tx.Inputs[0])
+	res := validateInputAdvanced(&et.accIn.Account, signBytes, tx.Inputs[0], 1)
 	assert.True(res.IsError(), "validateInputAdvanced: expected error on tx input without signature")
 
 	//good signed case
 	et.signSendTx(tx, et.accIn, et.accOut)
-	res = validateInputAdvanced(&et.accIn.Account, signBytes, tx.Inputs[0])
+	res = validateInputAdvanced(&et.accIn.Account, signBytes, tx.Inputs[0], 1)
 	assert.True(res.IsOK(), "validateInputAdvanced: expected no error on good tx input. Error: %v", res.Message)
 
 	//bad sequence case
 	et.accIn.Sequence = 1
 	et.signSendTx(tx, et.accIn, et.accOut)
-	res = validateInputAdvanced(&et.accIn.Account, signBytes, tx.Inputs[0])
+	res = validateInputAdvanced(&et.accIn.Account, signBytes, tx.Inputs[0], 1)
 	assert.Equal(result.CodeInvalidSequence, res.Code, "validateInputAdvanced: expected error on tx input with bad sequence")
 	et.accIn.Sequence = 0 //restore sequence
 
 	//bad balance case
 	et.accIn.Balance = types.NewCoins(2, 0)
 	et.signSendTx(tx, et.accIn, et.accOut)
-	res = validateInputAdvanced(&et.accIn.Account, signBytes, tx.Inputs[0])
+	res = validateInputAdvanced(&et.accIn.Account, signBytes, tx.Inputs[0], 1)
 	assert.Equal(result.CodeInsufficientFund, res.Code,
 		"validateInputAdvanced: expected error on tx input with insufficient funds %v", et.accIn.Sequence)
 }
@@ -643,7 +643,7 @@ func TestReserveFundTx(t *testing.T) {
 
 	user1 := types.MakeAcc("user 1")
 	user1.Balance = types.Coins{
-		PTXWei:   big.NewInt(6200 * txFee),
+		PTXWei: big.NewInt(6200 * txFee),
 		PandoWei: big.NewInt(10000 * 1e6),
 	}
 	et.acc2State(user1)
@@ -734,7 +734,7 @@ func TestReleaseFundTx(t *testing.T) {
 
 	user1 := types.MakeAcc("user 1")
 	user1.Balance = types.Coins{
-		PTXWei:   big.NewInt(50 * getMinimumTxFee()),
+		PTXWei: big.NewInt(50 * getMinimumTxFee()),
 		PandoWei: big.NewInt(10000 * 1e6),
 	}
 	et.acc2State(user1)
@@ -2285,8 +2285,8 @@ func TestSplitRuleExpiration(t *testing.T) {
 	log.Infof("Carol's final balance: %v", carolFinalBalance)
 
 	// Check the balances of the relevant accounts
-	aliceSplitCoins := types.Coins{}.NoNil()                                               // Alice should get ZERO split since the split rule has expired
-	bobSplitCoins := types.Coins{}.NoNil()                                                 // Bob should get ZERO split since the split rule has expired
+	aliceSplitCoins := types.Coins{}.NoNil()                                                 // Alice should get ZERO split since the split rule has expired
+	bobSplitCoins := types.Coins{}.NoNil()                                                   // Bob should get ZERO split since the split rule has expired
 	carolSplitCoins := types.Coins{PTXWei: big.NewInt(payAmount), PandoWei: big.NewInt(0)} // Carol should get the full payment since the split rule has expired
 	aliceReservedFund := types.Coins{PTXWei: big.NewInt(2001 * txFee), PandoWei: big.NewInt(0)}
 	reserveFundTxFee := types.NewCoins(0, getMinimumTxFee())
@@ -2372,4 +2372,3 @@ func TestSplitRuleZeroDuration(t *testing.T) {
 	retrievedSplitRule2ndTime := et.state().Delivered().GetSplitRule(resourceID)
 	assert.Nil(retrievedSplitRule2ndTime) // Should be expired and got deleted
 }
-

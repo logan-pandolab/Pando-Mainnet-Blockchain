@@ -59,11 +59,9 @@ func newExecSim(chainID string, db database.Database, snapshot mockSnapshot, val
 
 	mempool := mp.CreateMempool(dispatcher, consensus)
 
-	ledgerState := st.NewLedgerState(chainID, db)
+	ledgerState := st.NewLedgerState(chainID, db, nil)
 	//ledgerState.ResetState(initHeight, snapshot.block.StateHash)
 	ledgerState.ResetState(snapshot.block)
-
-	executor := exec.NewExecutor(db, chain, ledgerState, consensus, valMgr)
 
 	ledger := &Ledger{
 		consensus: consensus,
@@ -71,8 +69,10 @@ func newExecSim(chainID string, db database.Database, snapshot mockSnapshot, val
 		mempool:   mempool,
 		mu:        &sync.RWMutex{},
 		state:     ledgerState,
-		executor:  executor,
 	}
+	executor := exec.NewExecutor(db, chain, ledgerState, consensus, valMgr, ledger)
+	ledger.SetExecutor(executor)
+
 	consensus.SetLedger(ledger)
 
 	es := &execSim{
@@ -113,27 +113,27 @@ func genSimSnapshot(chainID string, db database.Database) (snapshot mockSnapshot
 	src6Acc := types.MakeAcc("src6")
 	src1Acc.Balance = types.Coins{
 		PandoWei: new(big.Int).Mul(new(big.Int).SetUint64(20), core.MinValidatorStakeDeposit),
-		PTXWei:   new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
+		PTXWei: new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
 	}
 	src2Acc.Balance = types.Coins{
 		PandoWei: new(big.Int).Mul(new(big.Int).SetUint64(20), core.MinValidatorStakeDeposit),
-		PTXWei:   new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
+		PTXWei: new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
 	}
 	src3Acc.Balance = types.Coins{
 		PandoWei: new(big.Int).Mul(new(big.Int).SetUint64(20), core.MinValidatorStakeDeposit),
-		PTXWei:   new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
+		PTXWei: new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
 	}
 	src4Acc.Balance = types.Coins{
 		PandoWei: new(big.Int).Mul(new(big.Int).SetUint64(20), core.MinValidatorStakeDeposit),
-		PTXWei:   new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
+		PTXWei: new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
 	}
 	src5Acc.Balance = types.Coins{
 		PandoWei: new(big.Int).Mul(new(big.Int).SetUint64(20), core.MinValidatorStakeDeposit),
-		PTXWei:   new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
+		PTXWei: new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
 	}
 	src6Acc.Balance = types.Coins{
 		PandoWei: new(big.Int).Mul(new(big.Int).SetUint64(20), core.MinValidatorStakeDeposit),
-		PTXWei:   new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
+		PTXWei: new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
 	}
 
 	val1Acc := types.MakeAcc("va1")
@@ -149,10 +149,10 @@ func genSimSnapshot(chainID string, db database.Database) (snapshot mockSnapshot
 	stakeAmount4 := new(big.Int).Mul(new(big.Int).SetUint64(4), core.MinValidatorStakeDeposit)
 
 	vcp := &core.ValidatorCandidatePool{}
-	vcp.DepositStake(src1Acc.Address, val1Acc.Address, stakeAmount1)
-	vcp.DepositStake(src2Acc.Address, val2Acc.Address, stakeAmount2)
-	vcp.DepositStake(src3Acc.Address, val3Acc.Address, stakeAmount3)
-	vcp.DepositStake(src4Acc.Address, val4Acc.Address, stakeAmount4)
+	vcp.DepositStake(src1Acc.Address, val1Acc.Address, stakeAmount1, 0)
+	vcp.DepositStake(src2Acc.Address, val2Acc.Address, stakeAmount2, 0)
+	vcp.DepositStake(src3Acc.Address, val3Acc.Address, stakeAmount3, 0)
+	vcp.DepositStake(src4Acc.Address, val4Acc.Address, stakeAmount4, 0)
 
 	sv := state.NewStoreView(initHeight, common.Hash{}, db)
 	sv.UpdateValidatorCandidatePool(vcp)
@@ -199,7 +199,7 @@ func newTestLedger() (chainID string, ledger *Ledger, mempool *mp.Mempool) {
 	p2psimnet := p2psim.NewSimnetWithHandler(nil)
 	messenger := p2psimnet.AddEndpoint(peerID)
 	mempool = newTestMempool(peerID, messenger, nil)
-	ledger = NewLedger(chainID, db, chain, consensus, valMgr, mempool)
+	ledger = NewLedger(chainID, db, nil, chain, consensus, valMgr, mempool)
 	mempool.SetLedger(ledger)
 
 	ctx := context.Background()
@@ -320,7 +320,7 @@ func newRawSendTx(chainID string, sequence int, addPubKey bool, accOut, accIn ty
 		if randint < 0 {
 			randint = -randint
 		}
-		delta = randint * int64(types.GasSendTxPerAccount*2)
+		delta = randint * int64(types.GasRegularTxJune2021)
 		if err != nil {
 			panic(err)
 		}
@@ -371,7 +371,7 @@ func newRawRametronStakeTx(chainID string, sequence int, addPubKey bool, accOut,
 		if randint < 0 {
 			randint = -randint
 		}
-		delta = randint * int64(types.GasSendTxPerAccount*2)
+		delta = randint * int64(types.GasRegularTxJune2021)
 		if err != nil {
 			panic(err)
 		}
@@ -422,7 +422,7 @@ func newRawWithdrawRametronStakeTx(chainID string, sequence int, addPubKey bool,
 		if randint < 0 {
 			randint = -randint
 		}
-		delta = randint * int64(types.GasSendTxPerAccount*2)
+		delta = randint * int64(types.GasRegularTxJune2021)
 		if err != nil {
 			panic(err)
 		}
@@ -463,8 +463,6 @@ func newRawWithdrawRametronStakeTx(chainID string, sequence int, addPubKey bool,
 	return sendTxBytes
 }
 
-
 func getMinimumTxFee() int64 {
 	return int64(types.MinimumTransactionFeePTXWei)
 }
-

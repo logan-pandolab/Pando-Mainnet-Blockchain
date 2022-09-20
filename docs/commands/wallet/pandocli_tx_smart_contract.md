@@ -15,10 +15,10 @@ pandocli tx smart_contract [flags]
 ```
 
 	[Deploy a smart contract] 
-	pandocli tx smart_contract --chain="pandonet" --from=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --value=1680 --gas_price=3 --gas_limit=50000 --data=600a600c600039600a6000f3600360135360016013f3 --seq=1	
+	pandocli tx smart_contract --chain="pandonet" --from=98fd878cd2267577ea6ac47bcb5ff4dd97d2f9e5 --value=1680 --gas_price=3 --gas_limit=50000 --data=600a600c600039600a6000f3600360135360016013f3 --seq=1	
 	
 	[Call an API of a smart contract]
-	pandocli tx smart_contract --chain="pandonet" --from=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --to=0x7ad6cea2bc3162e30a3c98d84f821b3233c22647 --gas_price=3 --gas_limit=50000 --seq=2
+	pandocli tx smart_contract --chain="pandonet" --from=98fd878cd2267577ea6ac47bcb5ff4dd97d2f9e5 --to=0x7ad6cea2bc3162e30a3c98d84f821b3233c22647 --gas_price=3 --gas_limit=50000 --seq=2
 ```
 
 ### Options

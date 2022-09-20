@@ -5,9 +5,9 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/pandotoken/pando/common"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"github.com/pandotoken/pando/common"
 )
 
 func TestHash(t *testing.T) {
@@ -146,7 +146,7 @@ func TestPrivKeyFromBytes(t *testing.T) {
 
 	address = pubKey.Address()
 	t.Logf("Address   : %v", address.Hex())
-	assert.Equal("0xdf1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E", address.Hex())
+	assert.Equal("0x2E833968E5bB786Ae419c4d13189fB081Cc43bab", address.Hex())
 }
 
 func TestAddressRecovery(t *testing.T) {

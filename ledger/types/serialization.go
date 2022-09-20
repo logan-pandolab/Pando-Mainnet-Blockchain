@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/pandotoken/pando/rlp"
 	"github.com/pkg/errors"
+	"github.com/pandotoken/pando/rlp"
 )
 
-const maxTxSize = 1024 * 1024
+const maxTxSize = 8 * 1024 * 1024
 
 // ----------------- Common -------------------
 
@@ -38,6 +38,7 @@ const (
 	TxDepositStake
 	TxWithdrawStake
 	TxDepositStakeV2
+	TxStakeRewardDistribution
 )
 
 func Fuzz(data []byte) int {
@@ -86,7 +87,7 @@ func TxFromBytes(raw []byte) (Tx, error) {
 	} else if txType == TxWithdrawRametronStake {
 		data := &WithdrawRametronStakeTx{}
 		err = s.Decode(data)
-		return data, err
+		return data, err	
 	} else if txType == TxReserveFund {
 		data := &ReserveFundTx{}
 		err = s.Decode(data)
@@ -119,6 +120,10 @@ func TxFromBytes(raw []byte) (Tx, error) {
 		data := &DepositStakeTxV2{}
 		err = s.Decode(data)
 		return data, err
+	} else if txType == TxStakeRewardDistribution {
+		data := &StakeRewardDistributionTx{}
+		err = s.Decode(data)
+		return data, err
 	} else {
 		return nil, fmt.Errorf("Unknown TX type: %v", txType)
 	}
@@ -137,7 +142,7 @@ func TxToBytes(t Tx) ([]byte, error) {
 	case *RametronStakeTx:
 		txType = TxRametronStake
 	case *WithdrawRametronStakeTx:
-		txType = TxWithdrawRametronStake
+		txType = TxWithdrawRametronStake	
 	case *ReserveFundTx:
 		txType = TxReserveFund
 	case *ReleaseFundTx:
@@ -154,6 +159,8 @@ func TxToBytes(t Tx) ([]byte, error) {
 		txType = TxWithdrawStake
 	case *DepositStakeTxV2:
 		txType = TxDepositStakeV2
+	case *StakeRewardDistributionTx:
+		txType = TxStakeRewardDistribution
 	default:
 		return nil, errors.New("Unsupported message type")
 	}
@@ -167,4 +174,3 @@ func TxToBytes(t Tx) ([]byte, error) {
 	}
 	return buf.Bytes(), nil
 }
-

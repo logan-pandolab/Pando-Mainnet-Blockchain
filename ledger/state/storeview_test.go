@@ -6,12 +6,12 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/pandotoken/pando/common"
 	"github.com/pandotoken/pando/core"
 	"github.com/pandotoken/pando/crypto"
 	"github.com/pandotoken/pando/ledger/types"
 	"github.com/pandotoken/pando/store/database/backend"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestStoreViewBasics(t *testing.T) {

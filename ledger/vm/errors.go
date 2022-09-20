@@ -28,4 +28,5 @@ var (
 	ErrContractAddressCollision = errors.New("contract address collision")
 	ErrNoCompatibleInterpreter  = errors.New("no compatible interpreter")
 	ErrInvalidGasLimit          = errors.New("invalid gas limit")
+	ErrInsufficientPandoBlance  = errors.New("insufficient Pando balance for transfer")
 )

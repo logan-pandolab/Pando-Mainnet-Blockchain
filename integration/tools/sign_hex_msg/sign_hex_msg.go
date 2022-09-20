@@ -13,7 +13,7 @@ import (
 //
 // Usage:   sign_hex_msg -signer=<signer_address> -keys_dir=<keys_dir> -msg=<hex_msg_to_be_signed> -encrypted=<true/false>
 //
-// Example: sign_hex_msg -signer=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E -keys_dir=$HOME/.pandocli/keys -msg=02f8a4c78085e8d4a51000f86ff86d942e833968e5 -encrypted=true
+// Example: sign_hex_msg -signer=2E833968E5bB786Ae419c4d13189fB081Cc43bab -keys_dir=$HOME/.pandocli/keys -msg=02f8a4c78085e8d4a51000f86ff86d942e833968e5 -encrypted=true
 //
 func main() {
 	signerAddress, keysDir, message, encrypted := parseArguments()

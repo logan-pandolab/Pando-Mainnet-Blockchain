@@ -10,7 +10,7 @@ import (
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Print version of current pandocli binary.",
+	Short: "Print version of current Pandocli binary.",
 	Run:   runVersion,
 }
 

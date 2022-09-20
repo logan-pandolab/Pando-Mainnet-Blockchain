@@ -23,7 +23,7 @@ type SendArgs struct {
 	From     string `json:"from"`
 	To       string `json:"to"`
 	PandoWei string `json:"PandoWei"`
-	PTXWei   string `json:"PTXWei"`
+	PTXWei string `json:"PTXWei"`
 	Fee      string `json:"fee"`
 	Sequence string `json:"sequence"`
 	Async    bool   `json:"async"`
@@ -34,7 +34,7 @@ type SendResult struct {
 	Block  *core.BlockHeader `json:"block",rlp:"nil"`
 }
 
-func (t *pandocliRPCService) Send(args *SendArgs, result *SendResult) (err error) {
+func (t *PandoCliRPCService) Send(args *SendArgs, result *SendResult) (err error) {
 	if len(args.From) == 0 || len(args.To) == 0 {
 		return fmt.Errorf("The from and to address cannot be empty")
 	}
@@ -68,7 +68,7 @@ func (t *pandocliRPCService) Send(args *SendArgs, result *SendResult) (err error
 	inputs := []types.TxInput{{
 		Address: from,
 		Coins: types.Coins{
-			PTXWei:   new(big.Int).Add(PTXWei, fee),
+			PTXWei: new(big.Int).Add(PTXWei, fee),
 			PandoWei: PandoWei,
 		},
 		Sequence: sequence,
@@ -76,14 +76,14 @@ func (t *pandocliRPCService) Send(args *SendArgs, result *SendResult) (err error
 	outputs := []types.TxOutput{{
 		Address: to,
 		Coins: types.Coins{
-			PTXWei:   PTXWei,
+			PTXWei: PTXWei,
 			PandoWei: PandoWei,
 		},
 	}}
 	sendTx := &types.SendTx{
 		Fee: types.Coins{
 			PandoWei: new(big.Int).SetUint64(0),
-			PTXWei:   fee,
+			PTXWei: fee,
 		},
 		Inputs:  inputs,
 		Outputs: outputs,
@@ -127,9 +127,9 @@ func (t *pandocliRPCService) Send(args *SendArgs, result *SendResult) (err error
 	return nil
 }
 
-//---------------------------------------Rametron------------------
+// ---------------------------- Rametron Stake ---------------------------------
 
-func (t *pandocliRPCService) RametronStake(args *SendArgs, result *SendResult) (err error) {
+func (t *PandoCliRPCService) RametronStake(args *SendArgs, result *SendResult) (err error) {
 	if len(args.From) == 0 || len(args.To) == 0 {
 		return fmt.Errorf("The from and to address cannot be empty")
 	}
@@ -141,11 +141,11 @@ func (t *pandocliRPCService) RametronStake(args *SendArgs, result *SendResult) (
 	to := common.HexToAddress(args.To)
 	PandoWei, ok := new(big.Int).SetString(args.PandoWei, 10)
 	if !ok {
-		return fmt.Errorf("Failed to parse PandoWei: %v", args.PandoWei)
+		return fmt.Errorf("Failed to parse pandowei: %v", args.PandoWei)
 	}
 	PTXWei, ok := new(big.Int).SetString(args.PTXWei, 10)
 	if !ok {
-		return fmt.Errorf("Failed to parse PTXWei: %v", args.PTXWei)
+		return fmt.Errorf("Failed to parse ptxwei: %v", args.PTXWei)
 	}
 	fee, ok := new(big.Int).SetString(args.Fee, 10)
 	if !ok {
@@ -163,7 +163,7 @@ func (t *pandocliRPCService) RametronStake(args *SendArgs, result *SendResult) (
 	inputs := []types.TxInput{{
 		Address: from,
 		Coins: types.Coins{
-			PTXWei:   new(big.Int).Add(PTXWei, fee),
+			PTXWei: new(big.Int).Add(PTXWei, fee),
 			PandoWei: PandoWei,
 		},
 		Sequence: sequence,
@@ -171,14 +171,14 @@ func (t *pandocliRPCService) RametronStake(args *SendArgs, result *SendResult) (
 	outputs := []types.TxOutput{{
 		Address: to,
 		Coins: types.Coins{
-			PTXWei:   PTXWei,
+			PTXWei: PTXWei,
 			PandoWei: PandoWei,
 		},
 	}}
 	rametronStakeTx := &types.RametronStakeTx{
 		Fee: types.Coins{
 			PandoWei: new(big.Int).SetUint64(0),
-			PTXWei:   fee,
+			PTXWei: fee,
 		},
 		Inputs:  inputs,
 		Outputs: outputs,
@@ -222,9 +222,9 @@ func (t *pandocliRPCService) RametronStake(args *SendArgs, result *SendResult) (
 	return nil
 }
 
-//-------------------------------Rametron withdraw stake---------------
+// ----------------------- Withdraw RAmetron STake ---------------------
 
-func (t *pandocliRPCService) WithdrawRametronStake(args *SendArgs, result *SendResult) (err error) {
+func (t *PandoCliRPCService) WithdrawRametronStake(args *SendArgs, result *SendResult) (err error) {
 	if len(args.From) == 0 || len(args.To) == 0 {
 		return fmt.Errorf("The from and to address cannot be empty")
 	}
@@ -236,11 +236,11 @@ func (t *pandocliRPCService) WithdrawRametronStake(args *SendArgs, result *SendR
 	to := common.HexToAddress(args.To)
 	PandoWei, ok := new(big.Int).SetString(args.PandoWei, 10)
 	if !ok {
-		return fmt.Errorf("Failed to parse PandoWei: %v", args.PandoWei)
+		return fmt.Errorf("Failed to parse pandowei: %v", args.PandoWei)
 	}
 	PTXWei, ok := new(big.Int).SetString(args.PTXWei, 10)
 	if !ok {
-		return fmt.Errorf("Failed to parse PTXWei: %v", args.PTXWei)
+		return fmt.Errorf("Failed to parse ptxwei: %v", args.PTXWei)
 	}
 	fee, ok := new(big.Int).SetString(args.Fee, 10)
 	if !ok {
@@ -258,7 +258,7 @@ func (t *pandocliRPCService) WithdrawRametronStake(args *SendArgs, result *SendR
 	inputs := []types.TxInput{{
 		Address: from,
 		Coins: types.Coins{
-			PTXWei:   new(big.Int).Add(PTXWei, fee),
+			PTXWei: new(big.Int).Add(PTXWei, fee),
 			PandoWei: PandoWei,
 		},
 		Sequence: sequence,
@@ -266,14 +266,14 @@ func (t *pandocliRPCService) WithdrawRametronStake(args *SendArgs, result *SendR
 	outputs := []types.TxOutput{{
 		Address: to,
 		Coins: types.Coins{
-			PTXWei:   PTXWei,
+			PTXWei: PTXWei,
 			PandoWei: PandoWei,
 		},
 	}}
 	withdrawrametronStakeTx := &types.WithdrawRametronStakeTx{
 		Fee: types.Coins{
 			PandoWei: new(big.Int).SetUint64(0),
-			PTXWei:   fee,
+			PTXWei: fee,
 		},
 		Inputs:  inputs,
 		Outputs: outputs,

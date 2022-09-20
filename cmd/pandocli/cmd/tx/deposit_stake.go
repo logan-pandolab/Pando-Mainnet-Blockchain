@@ -10,29 +10,29 @@ import (
 
 	"github.com/pandotoken/pando/crypto/bls"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/pandotoken/pando/cmd/pandocli/cmd/utils"
 	"github.com/pandotoken/pando/common"
 	"github.com/pandotoken/pando/core"
 	"github.com/pandotoken/pando/ledger/types"
 	"github.com/pandotoken/pando/rpc"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	rpcc "github.com/ybbus/jsonrpc"
 )
 
 // depositStakeCmd represents the deposit stake command
 // Example:
-//		pandocli tx deposit --chain="pandonet" --source=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --holder=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --stake=6000000 --purpose=0 --seq=7
+//		pandocli tx deposit --chain="pandonet" --source=2E833968E5bB786Ae419c4d13189fB081Cc43bab --holder=2E833968E5bB786Ae419c4d13189fB081Cc43bab --stake=6000000 --purpose=0 --seq=7
 var depositStakeCmd = &cobra.Command{
 	Use:     "deposit",
 	Short:   "Deposit stake to a validator or guardian",
-	Example: `pandocli tx deposit --chain="pandonet" --source=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --holder=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --stake=6000000 --purpose=0 --seq=7`,
+	Example: `pandocli tx deposit --chain="pandonet" --source=2E833968E5bB786Ae419c4d13189fB081Cc43bab --holder=2E833968E5bB786Ae419c4d13189fB081Cc43bab --stake=6000000 --purpose=0 --seq=7`,
 	Run:     doDepositStakeCmd,
 }
 
 func doDepositStakeCmd(cmd *cobra.Command, args []string) {
-	wallet, sourceAddress, err := walletUnlockWithPath(cmd, sourceFlag, pathFlag)
+	wallet, sourceAddress, err := walletUnlockWithPath(cmd, sourceFlag, pathFlag, passwordFlag)
 	if err != nil {
 		return
 	}
@@ -50,11 +50,22 @@ func doDepositStakeCmd(cmd *cobra.Command, args []string) {
 		utils.Error("Invalid input: stake must be positive\n")
 	}
 
+	var pandoStake *big.Int
+	var ptxStake *big.Int
+
+	if purposeFlag == core.StakeForValidator || purposeFlag == core.StakeForGuardian {
+		pandoStake = new(big.Int).SetUint64(0)
+		ptxStake = stake
+	} else { // purposeFlag == core.StakeForEliteEdgeNode
+		pandoStake = new(big.Int).SetUint64(0)
+		ptxStake = stake
+	}
+
 	source := types.TxInput{
 		Address: sourceAddress,
 		Coins: types.Coins{
-			PandoWei: new(big.Int).SetUint64(0),
-			PTXWei:   stake,
+			PandoWei: pandoStake,
+			PTXWei: ptxStake,
 		},
 		Sequence: uint64(seqFlag),
 	}
@@ -62,7 +73,7 @@ func doDepositStakeCmd(cmd *cobra.Command, args []string) {
 	depositStakeTx := &types.DepositStakeTxV2{
 		Fee: types.Coins{
 			PandoWei: new(big.Int).SetUint64(0),
-			PTXWei:   fee,
+			PTXWei: fee,
 		},
 		Source:  source,
 		Purpose: purposeFlag,
@@ -75,12 +86,12 @@ func doDepositStakeCmd(cmd *cobra.Command, args []string) {
 			utils.Error("holder must be a valid address")
 		}
 		holderAddress = common.HexToAddress(holderFlag)
-	} else {
+	} else if purposeFlag == core.StakeForGuardian {
 		if strings.HasPrefix(holderFlag, "0x") {
 			holderFlag = holderFlag[2:]
 		}
 		if len(holderFlag) != 458 {
-			utils.Error("Holder must be a valid guardian address")
+			utils.Error("Holder must be a valid guardian summary")
 		}
 		guardianKeyBytes, err := hex.DecodeString(holderFlag)
 		if err != nil {
@@ -98,6 +109,41 @@ func doDepositStakeCmd(cmd *cobra.Command, args []string) {
 		holderSig, err := crypto.SignatureFromBytes(guardianKeyBytes[164:])
 		if err != nil {
 			utils.Error("Failed to decode signature: %v\n", err)
+		}
+
+		depositStakeTx.BlsPubkey = blsPubkey
+		depositStakeTx.BlsPop = blsPop
+		depositStakeTx.HolderSig = holderSig
+	} else { // purposeFlag == core.StakeForEliteEdgeNode
+		if strings.HasPrefix(holderFlag, "0x") {
+			holderFlag = holderFlag[2:]
+		}
+		if len(holderFlag) != 522 {
+			utils.Error("Holder must be a valid elite edge node summary")
+		}
+		eenSummaryBytes, err := hex.DecodeString(holderFlag)
+		if err != nil {
+			utils.Error("Failed to decode elite edge node summary: %v\n", err)
+		}
+		holderAddress = common.BytesToAddress(eenSummaryBytes[:20])
+		blsPubkey, err := bls.PublicKeyFromBytes(eenSummaryBytes[20:68])
+		if err != nil {
+			utils.Error("Failed to decode bls Pubkey: %v\n", err)
+		}
+		blsPop, err := bls.SignatureFromBytes(eenSummaryBytes[68:164])
+		if err != nil {
+			utils.Error("Failed to decode bls POP: %v\n", err)
+		}
+		holderSig, err := crypto.SignatureFromBytes(eenSummaryBytes[164:229])
+		if err != nil {
+			utils.Error("Failed to decode signature: %v\n", err)
+		}
+
+		expectedSummaryHash := crypto.Keccak256Hash([]byte("0x" + holderFlag[:458])).Hex()
+		summaryHash := hex.EncodeToString(eenSummaryBytes[229:])
+		if expectedSummaryHash[2:] != summaryHash {
+			utils.Error("Failed to verify elite edge node summary: unmatched summary hash - %v vs %v\n",
+				expectedSummaryHash, summaryHash)
 		}
 
 		depositStakeTx.BlsPubkey = blsPubkey
@@ -123,7 +169,12 @@ func doDepositStakeCmd(cmd *cobra.Command, args []string) {
 
 	client := rpcc.NewRPCClient(viper.GetString(utils.CfgRemoteRPCEndpoint))
 
-	res, err := client.Call("pando.BroadcastRawTransaction", rpc.BroadcastRawTransactionArgs{TxBytes: signedTx})
+	var res *rpcc.RPCResponse
+	if asyncFlag {
+		res, err = client.Call("pando.BroadcastRawTransactionAsync", rpc.BroadcastRawTransactionArgs{TxBytes: signedTx})
+	} else {
+		res, err = client.Call("pando.BroadcastRawTransaction", rpc.BroadcastRawTransactionArgs{TxBytes: signedTx})
+	}
 	if err != nil {
 		utils.Error("Failed to broadcast transaction: %v\n", err)
 	}
@@ -138,11 +189,13 @@ func init() {
 	depositStakeCmd.Flags().StringVar(&sourceFlag, "source", "", "Source of the stake")
 	depositStakeCmd.Flags().StringVar(&holderFlag, "holder", "", "Holder of the stake")
 	depositStakeCmd.Flags().StringVar(&pathFlag, "path", "", "Wallet derivation path")
-	depositStakeCmd.Flags().StringVar(&feeFlag, "fee", fmt.Sprintf("%dwei", types.MinimumTransactionFeePTXWei), "Fee")
+	depositStakeCmd.Flags().StringVar(&feeFlag, "fee", fmt.Sprintf("%dwei", types.MinimumTransactionFeePTXWeiJune2021), "Fee")
 	depositStakeCmd.Flags().Uint64Var(&seqFlag, "seq", 0, "Sequence number of the transaction")
 	depositStakeCmd.Flags().StringVar(&stakeInPandoFlag, "stake", "5000000", "Pando amount to stake")
 	depositStakeCmd.Flags().Uint8Var(&purposeFlag, "purpose", 0, "Purpose of staking")
 	depositStakeCmd.Flags().StringVar(&walletFlag, "wallet", "soft", "Wallet type (soft|nano)")
+	depositStakeCmd.Flags().BoolVar(&asyncFlag, "async", false, "block until tx has been included in the blockchain")
+	depositStakeCmd.Flags().StringVar(&passwordFlag, "password", "", "password to unlock the wallet")
 
 	depositStakeCmd.MarkFlagRequired("chain")
 	depositStakeCmd.MarkFlagRequired("source")

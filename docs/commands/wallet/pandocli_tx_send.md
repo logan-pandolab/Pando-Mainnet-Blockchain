@@ -13,7 +13,7 @@ pandocli tx send [flags]
 ### Examples
 
 ```
-pandocli tx send --chain="pandonet" --from=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --to=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --pando=10 --ptx=9 --seq=1
+pandocli tx send --chain="pandonet" --from=98fd878cd2267577ea6ac47bcb5ff4dd97d2f9e5 --to=98fd878cd2267577ea6ac47bcb5ff4dd97d2f9e5 --pando=10 --ptx=9 --seq=1
 ```
 
 ### Options

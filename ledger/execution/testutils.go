@@ -9,13 +9,13 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/pandotoken/pando/blockchain"
 	"github.com/pandotoken/pando/common"
 	"github.com/pandotoken/pando/common/result"
 	"github.com/pandotoken/pando/core"
 	"github.com/pandotoken/pando/crypto"
 	st "github.com/pandotoken/pando/ledger/state"
-	"github.com/stretchr/testify/assert"
 
 	"github.com/pandotoken/pando/ledger/types"
 	"github.com/pandotoken/pando/store/database/backend"
@@ -109,7 +109,7 @@ func (et *execTest) reset() {
 		},
 	}
 	db := backend.NewMemDatabase()
-	ledgerState := st.NewLedgerState(chainID, db)
+	ledgerState := st.NewLedgerState(chainID, db, nil)
 	//ledgerState.ResetState(initHeight, initRootHash)
 	ledgerState.ResetState(initBlock)
 
@@ -123,7 +123,7 @@ func (et *execTest) reset() {
 	valMgr := NewTestValidatorManager(propser, valSet)
 
 	chain := blockchain.CreateTestChain()
-	executor := NewExecutor(db, chain, ledgerState, consensus, valMgr)
+	executor := NewExecutor(db, chain, ledgerState, consensus, valMgr, nil)
 
 	et.chainID = chainID
 	et.executor = executor
@@ -249,7 +249,7 @@ func (et *execTest) SetAcc(accs ...types.PrivAccount) {
 }
 
 func getMinimumTxFee() int64 {
-	return int64(types.MinimumTransactionFeePTXWei)
+	return int64(types.MinimumTransactionFeePTXWeiJune2021)
 }
 
 func createServicePaymentTx(chainID string, source, target *types.PrivAccount, amount int64, srcSeq, tgtSeq, paymentSeq, reserveSeq int, resourceID string) *types.ServicePaymentTx {
@@ -322,9 +322,9 @@ func setupForServicePayment(ast *assert.Assertions) (et *execTest, resourceID st
 		Duration:    1000,
 	}
 	reserveFundTx.Source.Signature = alice.Sign(reserveFundTx.SignBytes(et.chainID))
-	res := et.executor.getTxExecutor(reserveFundTx).sanityCheck(et.chainID, et.state().Delivered(), reserveFundTx)
+	res := et.executor.getTxExecutor(reserveFundTx).sanityCheck(et.chainID, et.state().Delivered(), core.DeliveredView, reserveFundTx)
 	ast.True(res.IsOK(), res.String())
-	_, res = et.executor.getTxExecutor(reserveFundTx).process(et.chainID, et.state().Delivered(), reserveFundTx)
+	_, res = et.executor.getTxExecutor(reserveFundTx).process(et.chainID, et.state().Delivered(), core.DeliveredView, reserveFundTx)
 	ast.True(res.IsOK(), res.String())
 
 	return et, resourceID, alice, bob, carol, aliceInitBalance, bobInitBalance, carolInitBalance
@@ -368,7 +368,11 @@ func setupForSmartContract(ast *assert.Assertions, numAccounts int) (et *execTes
 
 	for i := 0; i < numAccounts; i++ {
 		secret := "acc_secret_" + strconv.FormatInt(int64(i), 16)
-		privAccount := types.MakeAccWithInitBalance(secret, types.NewCoins(0, int64(9000000*types.MinimumGasPrice)))
+		privAccount := types.MakeAccWithInitBalance(secret,
+			types.Coins{
+				big.NewInt(0),
+				big.NewInt(1).Mul(big.NewInt(9000000), big.NewInt(int64(types.MinimumGasPriceJune2021))),
+			})
 		privAccounts = append(privAccounts, privAccount)
 		et.acc2State(privAccount)
 	}
@@ -376,4 +380,3 @@ func setupForSmartContract(ast *assert.Assertions, numAccounts int) (et *execTes
 
 	return et, privAccounts
 }
-

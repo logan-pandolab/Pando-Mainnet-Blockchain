@@ -26,6 +26,8 @@ import (
 	"github.com/pandotoken/pando/rlp"
 	"github.com/pandotoken/pando/snapshot"
 	"github.com/pandotoken/pando/store/database/backend"
+	"github.com/pandotoken/pando/store/rollingdb"
+	"github.com/pandotoken/pando/version"
 	ks "github.com/pandotoken/pando/wallet/softwallet/keystore"
 )
 
@@ -61,6 +63,8 @@ func runStart(cmd *cobra.Command, args []string) {
 	db, err := backend.NewLDBDatabase(mainDBPath, refDBPath,
 		viper.GetInt(common.CfgStorageLevelDBCacheSize),
 		viper.GetInt(common.CfgStorageLevelDBHandles))
+
+	rdb := rollingdb.NewRollingDB(dbPath, db)
 
 	if err != nil {
 		log.Fatalf("Failed to connect to the db. main: %v, ref: %v, err: %v",
@@ -138,6 +142,7 @@ func runStart(cmd *cobra.Command, args []string) {
 		NetworkOld:          networkOld,
 		Network:             network,
 		DB:                  db,
+		RollingDB:           rdb,
 		SnapshotPath:        snapshotPath,
 		ChainImportDirPath:  chainImportDirPath,
 		ChainCorrectionPath: chainCorrectionPath,
@@ -315,9 +320,11 @@ func printWelcomeBanner() {
 	fmt.Println("")
 	fmt.Println("")
 	fmt.Println(" ######################################################### ")
-	fmt.Println("Hello Pando")
+	fmt.Println(" #################### Hello Pando ######################## ")
 	fmt.Println(" ######################################################### ")
 	fmt.Println("")
+	fmt.Println("")
+	fmt.Printf("Version %v, GitHash %s\nBuilt at %s\n", version.Version, version.GitHash, version.Timestamp)
 	fmt.Println("")
 }
 
@@ -325,7 +332,7 @@ func printExitBanner() {
 	fmt.Println("")
 	fmt.Println("")
 	fmt.Println(" #################################################### ")
-	fmt.Println("Bye Pando")
+	fmt.Println(" #################### Bye Pando ##################### ")
 	fmt.Println(" #################################################### ")
 	fmt.Println("")
 	fmt.Println("")

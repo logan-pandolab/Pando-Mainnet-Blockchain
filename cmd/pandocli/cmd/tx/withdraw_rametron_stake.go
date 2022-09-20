@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/pandotoken/pando/cmd/pandocli/cmd/utils"
 	"github.com/pandotoken/pando/common"
 	"github.com/pandotoken/pando/ledger/types"
 	"github.com/pandotoken/pando/rpc"
 	wtypes "github.com/pandotoken/pando/wallet/types"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/ybbus/jsonrpc"
 	rpcc "github.com/ybbus/jsonrpc"
@@ -20,13 +20,13 @@ import (
 
 // withdrawrametronStakeCmd represents the withdrawrametronStake command
 // Example:
-//		pandocli tx withdrawrametronStake --chain="pandonet" --from=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --to=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --pando=10 --ptx=9 --seq=1
-//		pandocli tx withdrawrametronStake --chain="pandonet" --path "m/44'/60'/0'/0/0" --to=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --pando=10 --ptx=9 --seq=1 --wallet=trezor
-//		pandocli tx withdrawrametronStake --chain="pandonet" --path "m/44'/60'/0'/0" --to=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --pando=10 --ptx=9 --seq=1 --wallet=nano
+//		pandocli tx withdrawrametronStake --chain="pandonet" --from=2E833968E5bB786Ae419c4d13189fB081Cc43bab --to=9F1233798E905E173560071255140b4A8aBd3Ec6 --pando=10 --ptx=9 --seq=1
+//		pandocli tx withdrawrametronStake --chain="pandonet" --path "m/44'/60'/0'/0/0" --to=9F1233798E905E173560071255140b4A8aBd3Ec6 --pando=10 --ptx=9 --seq=1 --wallet=trezor
+//		pandocli tx withdrawrametronStake --chain="pandonet" --path "m/44'/60'/0'/0" --to=9F1233798E905E173560071255140b4A8aBd3Ec6 --pando=10 --ptx=9 --seq=1 --wallet=nano
 var withdrawrametronStakeCmd = &cobra.Command{
 	Use:     "withdrawrametronStake",
 	Short:   "WithdrawRametronStake tokens",
-	Example: `pandocli tx withdrawrametronStake --chain="pandonet" --from=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --to=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --pando=10 --ptx=9 --seq=1`,
+	Example: `pandocli tx withdrawrametronStake --chain="pandonet" --from=2E833968E5bB786Ae419c4d13189fB081Cc43bab --to=9F1233798E905E173560071255140b4A8aBd3Ec6 --pando=10 --ptx=9 --seq=1`,
 	Run:     doWithdrawRametronStakeCmd,
 }
 
@@ -46,7 +46,7 @@ func doWithdrawRametronStakeCmd(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	wallet, fromAddress, err := walletUnlockWithPath(cmd, fromFlag, pathFlag)
+	wallet, fromAddress, err := walletUnlockWithPath(cmd, fromFlag, pathFlag, passwordFlag)
 	if err != nil || wallet == nil {
 		return
 	}
@@ -67,7 +67,7 @@ func doWithdrawRametronStakeCmd(cmd *cobra.Command, args []string) {
 	inputs := []types.TxInput{{
 		Address: fromAddress,
 		Coins: types.Coins{
-			PTXWei:   new(big.Int).Add(ptx, fee),
+			PTXWei: new(big.Int).Add(ptx, fee),
 			PandoWei: pando,
 		},
 		Sequence: uint64(seqFlag),
@@ -75,14 +75,14 @@ func doWithdrawRametronStakeCmd(cmd *cobra.Command, args []string) {
 	outputs := []types.TxOutput{{
 		Address: common.HexToAddress(toFlag),
 		Coins: types.Coins{
-			PTXWei:   ptx,
+			PTXWei: ptx,
 			PandoWei: pando,
 		},
 	}}
 	withdrawrametronStakeTx := &types.WithdrawRametronStakeTx{
 		Fee: types.Coins{
 			PandoWei: new(big.Int).SetUint64(0),
-			PTXWei:   fee,
+			PTXWei: fee,
 		},
 		Inputs:  inputs,
 		Outputs: outputs,
@@ -129,19 +129,19 @@ func doWithdrawRametronStakeCmd(cmd *cobra.Command, args []string) {
 
 func init() {
 	withdrawrametronStakeCmd.Flags().StringVar(&chainIDFlag, "chain", "", "Chain ID")
-	withdrawrametronStakeCmd.Flags().StringVar(&fromFlag, "from", "", "Source of the stake")
-	withdrawrametronStakeCmd.Flags().StringVar(&toFlag, "to", "", "Holder of the stake")
+	withdrawrametronStakeCmd.Flags().StringVar(&fromFlag, "from", "", "Address to withdrawrametronStake from")
+	withdrawrametronStakeCmd.Flags().StringVar(&toFlag, "to", "", "Address to withdrawrametronStake to")
 	withdrawrametronStakeCmd.Flags().StringVar(&pathFlag, "path", "", "Wallet derivation path")
 	withdrawrametronStakeCmd.Flags().Uint64Var(&seqFlag, "seq", 0, "Sequence number of the transaction")
 	withdrawrametronStakeCmd.Flags().StringVar(&pandoAmountFlag, "pando", "0", "Pando amount")
-	withdrawrametronStakeCmd.Flags().StringVar(&ptxAmountFlag, "ptx", "0", "Pando amount")
-	withdrawrametronStakeCmd.Flags().StringVar(&feeFlag, "fee", fmt.Sprintf("%dwei", types.MinimumTransactionFeePTXWei), "Fee")
+	withdrawrametronStakeCmd.Flags().StringVar(&ptxAmountFlag, "ptx", "0", "PTX amount")
+	withdrawrametronStakeCmd.Flags().StringVar(&feeFlag, "fee", fmt.Sprintf("%dwei", types.MinimumTransactionFeePTXWeiJune2021), "Fee")
 	withdrawrametronStakeCmd.Flags().StringVar(&walletFlag, "wallet", "soft", "Wallet type (soft|nano|trezor)")
 	withdrawrametronStakeCmd.Flags().BoolVar(&asyncFlag, "async", false, "block until tx has been included in the blockchain")
+	withdrawrametronStakeCmd.Flags().StringVar(&passwordFlag, "password", "", "password to unlock the wallet")
 
 	withdrawrametronStakeCmd.MarkFlagRequired("chain")
 	//withdrawrametronStakeCmd.MarkFlagRequired("from")
 	withdrawrametronStakeCmd.MarkFlagRequired("to")
 	withdrawrametronStakeCmd.MarkFlagRequired("seq")
 }
-

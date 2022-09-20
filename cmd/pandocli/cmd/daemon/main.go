@@ -11,7 +11,7 @@ var (
 // DaemonCmd represents the call command
 var DaemonCmd = &cobra.Command{
 	Use:   "daemon",
-	Short: "Run the pandocli Daemon",
+	Short: "Run the PandoCli Daemon",
 }
 
 func init() {

@@ -86,7 +86,7 @@ func Accs2TxInputs(seq int, accs ...PrivAccount) []TxInput {
 	for _, acc := range accs {
 		tx := NewTxInput(
 			acc.Account.Address,
-			NewCoins(4, int64(MinimumTransactionFeePTXWei)),
+			NewCoins(4, int64(MinimumTransactionFeePTXWeiJune2021)),
 			seq)
 		txs = append(txs, tx)
 	}
@@ -108,7 +108,7 @@ func Accs2TxOutputs(accs ...PrivAccount) []TxOutput {
 
 func MakeSendTx(seq int, accOut PrivAccount, accsIn ...PrivAccount) *SendTx {
 	tx := &SendTx{
-		Fee:     NewCoins(0, int64(MinimumTransactionFeePTXWei)),
+		Fee:     NewCoins(0, int64(MinimumTransactionFeePTXWeiJune2021)),
 		Inputs:  Accs2TxInputs(seq, accsIn...),
 		Outputs: Accs2TxOutputs(accOut),
 	}
@@ -125,7 +125,7 @@ func SignSendTx(chainID string, tx *SendTx, accs ...PrivAccount) {
 
 func MakeRametronStakeTx(seq int, accOut PrivAccount, accsIn ...PrivAccount) *RametronStakeTx {
 	tx := &RametronStakeTx{
-		Fee:     NewCoins(0, int64(MinimumTransactionFeePTXWei)),
+		Fee:     NewCoins(0, int64(MinimumTransactionFeePTXWeiJune2021)),
 		Inputs:  Accs2TxInputs(seq, accsIn...),
 		Outputs: Accs2TxOutputs(accOut),
 	}
@@ -142,7 +142,7 @@ func SignRametronStakeTx(chainID string, tx *RametronStakeTx, accs ...PrivAccoun
 
 func MakeWithdrawRametronStakeTx(seq int, accOut PrivAccount, accsIn ...PrivAccount) *WithdrawRametronStakeTx {
 	tx := &WithdrawRametronStakeTx{
-		Fee:     NewCoins(0, int64(MinimumTransactionFeePTXWei)),
+		Fee:     NewCoins(0, int64(MinimumTransactionFeePTXWeiJune2021)),
 		Inputs:  Accs2TxInputs(seq, accsIn...),
 		Outputs: Accs2TxOutputs(accOut),
 	}

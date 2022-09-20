@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/pandotoken/pando/common"
 	"github.com/pandotoken/pando/crypto"
-	"github.com/pkg/errors"
 )
 
 var EmptyCodeHash = common.BytesToHash(crypto.Keccak256(nil))

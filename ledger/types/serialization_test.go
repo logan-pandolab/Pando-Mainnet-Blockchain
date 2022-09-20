@@ -6,11 +6,11 @@ import (
 
 	"github.com/pandotoken/pando/crypto/bls"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/pandotoken/pando/common"
 	"github.com/pandotoken/pando/crypto"
 	"github.com/pandotoken/pando/rlp"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestPubKey(t *testing.T) {
@@ -122,7 +122,7 @@ func TestTx(t *testing.T) {
 	assert.Equal(tx1.(*SendTx).Outputs[1].Address, tx2.(*SendTx).Outputs[1].Address)
 	assert.Equal(tx1.(*SendTx).Outputs[2].Address, tx2.(*SendTx).Outputs[2].Address)
 	assert.Equal(tx1.(*SendTx).Fee, tx2.(*SendTx).Fee)
-	//--------------------------RametronStake--------
+
 	tx1 = &RametronStakeTx{
 		Fee:     NewCoins(123, 0),
 		Inputs:  []TxInput{{Address: getTestAddress("123")}, {Address: getTestAddress("798")}},
@@ -139,7 +139,6 @@ func TestTx(t *testing.T) {
 	assert.Equal(tx1.(*RametronStakeTx).Outputs[2].Address, tx2.(*RametronStakeTx).Outputs[2].Address)
 	assert.Equal(tx1.(*RametronStakeTx).Fee, tx2.(*RametronStakeTx).Fee)
 
-	//-----------------------Rametron withdraw stake-----------
 	tx1 = &WithdrawRametronStakeTx{
 		Fee:     NewCoins(123, 0),
 		Inputs:  []TxInput{{Address: getTestAddress("123")}, {Address: getTestAddress("798")}},
@@ -279,4 +278,3 @@ func getTestAddress(addr string) common.Address {
 	copy(address[:], addr)
 	return address
 }
-

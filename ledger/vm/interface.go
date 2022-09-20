@@ -26,11 +26,15 @@ import (
 // StateDB is an EVM database for full state querying.
 type StateDB interface {
 	CreateAccount(common.Address)
+	GetAccount(common.Address) *types.Account
+	CreateAccountWithPreviousBalance(addr common.Address)
 
 	SubBalance(common.Address, *big.Int)
 	AddBalance(common.Address, *big.Int)
 	GetBalance(common.Address) *big.Int
 
+	SubPandoBalance(common.Address, *big.Int)
+	AddPandoBalance(common.Address, *big.Int)
 	GetPandoBalance(common.Address) *big.Int // GetPandoBalance returns the PandoWei balance of the given address
 	GetPandoStake(common.Address) *big.Int   // GetPandoStake returns the total amount of PandoWei the address staked to validators and/or guardians
 
@@ -49,6 +53,8 @@ type StateDB interface {
 	GetCommittedState(common.Address, common.Hash) common.Hash
 	GetState(common.Address, common.Hash) common.Hash
 	SetState(common.Address, common.Hash, common.Hash)
+
+	GetBlockHeight() uint64
 
 	Suicide(common.Address) bool
 	HasSuicided(common.Address) bool

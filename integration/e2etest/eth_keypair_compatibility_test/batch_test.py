@@ -7,12 +7,12 @@ import subprocess
 # Configs
 #
 ETHEREUM_ROOT = '~/.ethereum'
-pandocli_ROOT = '~/.pandocli'
+PANDOCLI_ROOT = '~/.pandocli'
 NEW_ACCOUNT_PASSWORD_FILEPATH = './new_account_password.txt'
-FAUCET_ADDRESS = '0xdf1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E'
+FAUCET_ADDRESS = '0x9f1233798e905e173560071255140b4a8abd3ec6'
 FAUCET_PASSWORD = 'qwertyuiop'
 UNLOCK_KEY_CMD_TMPL = """curl -X POST -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"pandocli.UnlockKey","params":[{"address":"%s", "password":"%s"}],"id":1}' http://localhost:16889/rpc"""
-SEND_CMD_TMPL = """curl -X POST -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"pandocli.Send","params":[{"chain_id":"testnet", "from":"%s", "to":"%s", "PandoWei":"%s", "PTXWei":"%s", "fee":"10000000000000000", "sequence":"%s", "async":false}],"id":1}' --silent --output /dev/null http://localhost:16889/rpc"""
+SEND_CMD_TMPL = """curl -X POST -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"pandocli.Send","params":[{"chain_id":"testnet", "from":"%s", "to":"%s", "pandowei":"%s", "ptxwei":"%s", "fee":"10000000000000000", "sequence":"%s", "async":false}],"id":1}' --silent --output /dev/null http://localhost:16889/rpc"""
 
 def GenerateNewKeystore():
   geth_cmd = 'geth account new --datadir "%s" --password %s'%(ETHEREUM_ROOT, NEW_ACCOUNT_PASSWORD_FILEPATH)
@@ -28,7 +28,7 @@ def GenerateNewKeystore():
     exit(1)
   address = match.groups()[0]
 
-  cp_cmd = 'cp %s/keystore/*--%s %s/keys/encrypted/%s'%(ETHEREUM_ROOT, address, pandocli_ROOT, address)
+  cp_cmd = 'cp %s/keystore/*--%s %s/keys/encrypted/%s'%(ETHEREUM_ROOT, address, PANDOCLI_ROOT, address)
   os.system(cp_cmd)
   
   return address

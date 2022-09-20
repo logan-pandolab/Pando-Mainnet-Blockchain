@@ -13,7 +13,7 @@ pandocli tx split_rule [flags]
 ### Examples
 
 ```
-pandocli tx split_rule --chain="pandonet" --from=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --seq=8 --resource_id=die_another_day --addresses=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E,df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --percentages=30,30 --duration=1000
+pandocli tx split_rule --chain="pandonet" --from=98fd878cd2267577ea6ac47bcb5ff4dd97d2f9e5 --seq=8 --resource_id=die_another_day --addresses=98fd878cd2267577ea6ac47bcb5ff4dd97d2f9e5,98fd878cd2267577ea6ac47bcb5ff4dd97d2f9e5 --percentages=30,30 --duration=1000
 ```
 
 ### Options

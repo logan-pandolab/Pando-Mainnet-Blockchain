@@ -288,7 +288,7 @@ static bool windows_init_clock(struct libusb_context *ctx)
 		// The hires frequency can go as high as 4 GHz, so we'll use a conversion
 		// to picoseconds to compute the tv_nsecs part in clock_gettime
 		hires_frequency = li_frequency.QuadPart;
-		hires_ticks_to_ps = UINT64_C(10000000000000000) / hires_frequency;
+		hires_ticks_to_ps = UINT64_C(1000000000000) / hires_frequency;
 		usbi_dbg("hires timer available (Frequency: %"PRIu64" Hz)", hires_frequency);
 
 		// Because QueryPerformanceCounter might report different values when

@@ -19,7 +19,7 @@ var startDaemonCmd = &cobra.Command{
 	Example: `pandocli daemon start --port=16889`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cfgPath := cmd.Flag("config").Value.String()
-		server, err := rpc.NewPandocliRPCServer(cfgPath, portFlag)
+		server, err := rpc.NewPandoCliRPCServer(cfgPath, portFlag)
 		if err != nil {
 			log.Fatalf("Failed to run the PandoCli Daemon: %v", err)
 		}
@@ -36,7 +36,7 @@ func init() {
 }
 
 type PandoCliDaemon struct {
-	RPC *rpc.PandocliRPCServer
+	RPC *rpc.PandoCliRPCServer
 
 	// Life cycle
 	wg      *sync.WaitGroup

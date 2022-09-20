@@ -5,27 +5,27 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/pandotoken/pando/cmd/pandocli/cmd/utils"
 	"github.com/pandotoken/pando/ledger/types"
 	"github.com/pandotoken/pando/rpc"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	rpcc "github.com/ybbus/jsonrpc"
 )
 
 // releaseFundCmd represents the release fund command
 // Example:
-//		pandocli tx release --chain="pandonet" --from=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E  --reserve_seq=8 --seq=8
+//		pandocli tx release --chain="pandonet" --from=2E833968E5bB786Ae419c4d13189fB081Cc43bab  --reserve_seq=8 --seq=8
 var releaseFundCmd = &cobra.Command{
 	Use:     "release",
 	Short:   "Release fund",
-	Example: `pandocli tx release --chain="pandonet" --from=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E  --reserve_seq=8 --seq=8`,
+	Example: `pandocli tx release --chain="pandonet" --from=2E833968E5bB786Ae419c4d13189fB081Cc43bab  --reserve_seq=8 --seq=8`,
 	Run:     doReleaseFundCmd,
 }
 
 func doReleaseFundCmd(cmd *cobra.Command, args []string) {
-	wallet, fromAddress, err := walletUnlock(cmd, fromFlag)
+	wallet, fromAddress, err := walletUnlock(cmd, fromFlag, passwordFlag)
 	if err != nil {
 		return
 	}
@@ -43,7 +43,7 @@ func doReleaseFundCmd(cmd *cobra.Command, args []string) {
 	releaseFundTx := &types.ReleaseFundTx{
 		Fee: types.Coins{
 			PandoWei: new(big.Int).SetUint64(0),
-			PTXWei:   ptx,
+			PTXWei: ptx,
 		},
 		Source:          input,
 		ReserveSequence: reserveSeqFlag,
@@ -63,7 +63,12 @@ func doReleaseFundCmd(cmd *cobra.Command, args []string) {
 
 	client := rpcc.NewRPCClient(viper.GetString(utils.CfgRemoteRPCEndpoint))
 
-	res, err := client.Call("pando.BroadcastRawTransaction", rpc.BroadcastRawTransactionArgs{TxBytes: signedTx})
+	var res *rpcc.RPCResponse
+	if asyncFlag {
+		res, err = client.Call("pando.BroadcastRawTransactionAsync", rpc.BroadcastRawTransactionArgs{TxBytes: signedTx})
+	} else {
+		res, err = client.Call("pando.BroadcastRawTransaction", rpc.BroadcastRawTransactionArgs{TxBytes: signedTx})
+	}
 	if err != nil {
 		utils.Error("Failed to broadcast transaction: %v\n", err)
 	}
@@ -77,9 +82,11 @@ func init() {
 	releaseFundCmd.Flags().StringVar(&chainIDFlag, "chain", "", "Chain ID")
 	releaseFundCmd.Flags().StringVar(&fromFlag, "from", "", "Reserve owner's address")
 	releaseFundCmd.Flags().Uint64Var(&seqFlag, "seq", 0, "Sequence number of the transaction")
-	releaseFundCmd.Flags().StringVar(&feeFlag, "fee", fmt.Sprintf("%dwei", types.MinimumTransactionFeePTXWei), "Fee")
+	releaseFundCmd.Flags().StringVar(&feeFlag, "fee", fmt.Sprintf("%dwei", types.MinimumTransactionFeePTXWeiJune2021), "Fee")
 	releaseFundCmd.Flags().Uint64Var(&reserveSeqFlag, "reserve_seq", 1000, "Reserve sequence")
 	releaseFundCmd.Flags().StringVar(&walletFlag, "wallet", "soft", "Wallet type (soft|nano)")
+	releaseFundCmd.Flags().BoolVar(&asyncFlag, "async", false, "block until tx has been included in the blockchain")
+	releaseFundCmd.Flags().StringVar(&passwordFlag, "password", "", "password to unlock the wallet")
 
 	releaseFundCmd.MarkFlagRequired("chain")
 	releaseFundCmd.MarkFlagRequired("from")

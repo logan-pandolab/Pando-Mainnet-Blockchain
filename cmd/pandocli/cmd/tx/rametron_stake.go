@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/pandotoken/pando/cmd/pandocli/cmd/utils"
 	"github.com/pandotoken/pando/common"
 	"github.com/pandotoken/pando/ledger/types"
 	"github.com/pandotoken/pando/rpc"
 	wtypes "github.com/pandotoken/pando/wallet/types"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/ybbus/jsonrpc"
 	rpcc "github.com/ybbus/jsonrpc"
@@ -20,13 +20,13 @@ import (
 
 // rametronStakeCmd represents the rametronStake command
 // Example:
-//		pandocli tx rametronStake --chain="pandonet" --from=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --to=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --pando=10 --ptx=9 --seq=1
-//		pandocli tx rametronStake --chain="pandonet" --path "m/44'/60'/0'/0/0" --to=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --pando=10 --ptx=9 --seq=1 --wallet=trezor
-//		pandocli tx rametronStake --chain="pandonet" --path "m/44'/60'/0'/0" --to=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --pando=10 --ptx=9 --seq=1 --wallet=nano
+//		pandocli tx rametronStake --chain="pandonet" --from=2E833968E5bB786Ae419c4d13189fB081Cc43bab --to=9F1233798E905E173560071255140b4A8aBd3Ec6 --pando=10 --ptx=9 --seq=1
+//		pandocli tx rametronStake --chain="pandonet" --path "m/44'/60'/0'/0/0" --to=9F1233798E905E173560071255140b4A8aBd3Ec6 --pando=10 --ptx=9 --seq=1 --wallet=trezor
+//		pandocli tx rametronStake --chain="pandonet" --path "m/44'/60'/0'/0" --to=9F1233798E905E173560071255140b4A8aBd3Ec6 --pando=10 --ptx=9 --seq=1 --wallet=nano
 var rametronStakeCmd = &cobra.Command{
 	Use:     "rametronStake",
 	Short:   "RametronStake tokens",
-	Example: `pandocli tx rametronStake --chain="pandonet" --from=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --to=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --pando=10 --ptx=9 --seq=1`,
+	Example: `pandocli tx rametronStake --chain="pandonet" --from=2E833968E5bB786Ae419c4d13189fB081Cc43bab --to=9F1233798E905E173560071255140b4A8aBd3Ec6 --pando=10 --ptx=9 --seq=1`,
 	Run:     doRametronStakeCmd,
 }
 
@@ -46,7 +46,7 @@ func doRametronStakeCmd(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	wallet, fromAddress, err := walletUnlockWithPath(cmd, fromFlag, pathFlag)
+	wallet, fromAddress, err := walletUnlockWithPath(cmd, fromFlag, pathFlag, passwordFlag)
 	if err != nil || wallet == nil {
 		return
 	}
@@ -67,7 +67,7 @@ func doRametronStakeCmd(cmd *cobra.Command, args []string) {
 	inputs := []types.TxInput{{
 		Address: fromAddress,
 		Coins: types.Coins{
-			PTXWei:   new(big.Int).Add(ptx, fee),
+			PTXWei: new(big.Int).Add(ptx, fee),
 			PandoWei: pando,
 		},
 		Sequence: uint64(seqFlag),
@@ -75,14 +75,14 @@ func doRametronStakeCmd(cmd *cobra.Command, args []string) {
 	outputs := []types.TxOutput{{
 		Address: common.HexToAddress(toFlag),
 		Coins: types.Coins{
-			PTXWei:   ptx,
+			PTXWei: ptx,
 			PandoWei: pando,
 		},
 	}}
 	rametronStakeTx := &types.RametronStakeTx{
 		Fee: types.Coins{
 			PandoWei: new(big.Int).SetUint64(0),
-			PTXWei:   fee,
+			PTXWei: fee,
 		},
 		Inputs:  inputs,
 		Outputs: outputs,
@@ -129,19 +129,19 @@ func doRametronStakeCmd(cmd *cobra.Command, args []string) {
 
 func init() {
 	rametronStakeCmd.Flags().StringVar(&chainIDFlag, "chain", "", "Chain ID")
-	rametronStakeCmd.Flags().StringVar(&fromFlag, "from", "", "Source of the stake")
-	rametronStakeCmd.Flags().StringVar(&toFlag, "to", "", "Holder of the stake")
+	rametronStakeCmd.Flags().StringVar(&fromFlag, "from", "", "Address to rametronStake from")
+	rametronStakeCmd.Flags().StringVar(&toFlag, "to", "", "Address to rametronStake to")
 	rametronStakeCmd.Flags().StringVar(&pathFlag, "path", "", "Wallet derivation path")
 	rametronStakeCmd.Flags().Uint64Var(&seqFlag, "seq", 0, "Sequence number of the transaction")
 	rametronStakeCmd.Flags().StringVar(&pandoAmountFlag, "pando", "0", "Pando amount")
-	rametronStakeCmd.Flags().StringVar(&ptxAmountFlag, "ptx", "0", "Pando amount")
-	rametronStakeCmd.Flags().StringVar(&feeFlag, "fee", fmt.Sprintf("%dwei", types.MinimumTransactionFeePTXWei), "Fee")
+	rametronStakeCmd.Flags().StringVar(&ptxAmountFlag, "ptx", "0", "PTX amount")
+	rametronStakeCmd.Flags().StringVar(&feeFlag, "fee", fmt.Sprintf("%dwei", types.MinimumTransactionFeePTXWeiJune2021), "Fee")
 	rametronStakeCmd.Flags().StringVar(&walletFlag, "wallet", "soft", "Wallet type (soft|nano|trezor)")
 	rametronStakeCmd.Flags().BoolVar(&asyncFlag, "async", false, "block until tx has been included in the blockchain")
+	rametronStakeCmd.Flags().StringVar(&passwordFlag, "password", "", "password to unlock the wallet")
 
 	rametronStakeCmd.MarkFlagRequired("chain")
 	//rametronStakeCmd.MarkFlagRequired("from")
 	rametronStakeCmd.MarkFlagRequired("to")
 	rametronStakeCmd.MarkFlagRequired("seq")
 }
-

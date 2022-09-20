@@ -13,7 +13,7 @@ pandocli tx reserve [flags]
 ### Examples
 
 ```
-pandocli tx reserve --chain="pandonet" --from=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --fund=900 --collateral=1203 --seq=6 --duration=1002 --resource_ids=die_another_day,hello
+pandocli tx reserve --chain="pandonet" --from=98fd878cd2267577ea6ac47bcb5ff4dd97d2f9e5 --fund=900 --collateral=1203 --seq=6 --duration=1002 --resource_ids=die_another_day,hello
 ```
 
 ### Options

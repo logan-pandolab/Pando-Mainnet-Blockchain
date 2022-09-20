@@ -24,7 +24,7 @@ import (
 
 var logger *log.Entry
 
-type pandocliRPCService struct {
+type PandoCliRPCService struct {
 	wallet wt.Wallet
 
 	// Life cycle
@@ -34,9 +34,9 @@ type pandocliRPCService struct {
 	stopped bool
 }
 
-// pandocliRPCServer is an instance of the CLI RPC service.
-type PandocliRPCServer struct {
-	*pandocliRPCService
+// PandoCliRPCServer is an instance of the CLI RPC service.
+type PandoCliRPCServer struct {
+	*PandoCliRPCService
 	port string
 
 	server   *http.Server
@@ -45,16 +45,16 @@ type PandocliRPCServer struct {
 	listener net.Listener
 }
 
-// NewpandocliRPCServer creates a new instance of PandoRPCServer.
-func NewPandocliRPCServer(cfgPath, port string) (*PandocliRPCServer, error) {
+// NewPandoCliRPCServer creates a new instance of PandoRPCServer.
+func NewPandoCliRPCServer(cfgPath, port string) (*PandoCliRPCServer, error) {
 	wallet, err := wl.OpenWallet(cfgPath, wt.WalletTypeSoft, true)
 	if err != nil {
 		fmt.Printf("Failed to open wallet: %v\n", err)
 		return nil, err
 	}
 
-	t := &PandocliRPCServer{
-		pandocliRPCService: &pandocliRPCService{
+	t := &PandoCliRPCServer{
+		PandoCliRPCService: &PandoCliRPCService{
 			wallet: wallet,
 			wg:     &sync.WaitGroup{},
 		},
@@ -62,7 +62,7 @@ func NewPandocliRPCServer(cfgPath, port string) (*PandocliRPCServer, error) {
 	}
 
 	s := rpc.NewServer()
-	s.RegisterName("pandocli", t.pandocliRPCService)
+	s.RegisterName("pandocli", t.PandoCliRPCService)
 
 	t.handler = s
 
@@ -82,7 +82,7 @@ func NewPandocliRPCServer(cfgPath, port string) (*PandocliRPCServer, error) {
 }
 
 // Start creates the main goroutine.
-func (t *PandocliRPCServer) Start(ctx context.Context) {
+func (t *PandoCliRPCServer) Start(ctx context.Context) {
 	c, cancel := context.WithCancel(ctx)
 	t.ctx = c
 	t.cancel = cancel
@@ -91,7 +91,7 @@ func (t *PandocliRPCServer) Start(ctx context.Context) {
 	go t.mainLoop()
 }
 
-func (t *PandocliRPCServer) mainLoop() {
+func (t *PandoCliRPCServer) mainLoop() {
 	defer t.wg.Done()
 
 	go t.serve()
@@ -101,7 +101,7 @@ func (t *PandocliRPCServer) mainLoop() {
 	t.server.Shutdown(t.ctx)
 }
 
-func (t *PandocliRPCServer) serve() {
+func (t *PandoCliRPCServer) serve() {
 	l, err := net.Listen("tcp", ":"+t.port)
 	if err != nil {
 		logger.WithFields(log.Fields{"error": err}).Fatal("Failed to create listener")
@@ -117,11 +117,11 @@ func (t *PandocliRPCServer) serve() {
 }
 
 // Stop notifies all goroutines to stop without blocking.
-func (t *PandocliRPCServer) Stop() {
+func (t *PandoCliRPCServer) Stop() {
 	t.cancel()
 }
 
 // Wait blocks until all goroutines stop.
-func (t *PandocliRPCServer) Wait() {
+func (t *PandoCliRPCServer) Wait() {
 	t.wg.Wait()
 }

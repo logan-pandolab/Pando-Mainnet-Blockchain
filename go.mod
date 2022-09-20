@@ -35,8 +35,6 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mongodb/mongo-go-driver v0.0.17
 	github.com/multiformats/go-multiaddr v0.0.4
-	github.com/pandotoken/pando/common v0.0.0
-	github.com/pandotoken/pando/rpc/lib/rpc-codec/jsonrpc2 v0.0.0
 	github.com/pborman/uuid v0.0.0-20180906182336-adf5a7427709
 	github.com/phoreproject/bls v0.0.0-20191016230924-b2e57acce2ed
 	github.com/pion/datachannel v1.4.13
@@ -52,6 +50,8 @@ require (
 	github.com/spf13/viper v1.5.0
 	github.com/stretchr/testify v1.4.0
 	github.com/syndtr/goleveldb v1.0.0
+	github.com/pandotoken/pando/common v0.0.0
+	github.com/pandotoken/pando/rpc/lib/rpc-codec/jsonrpc2 v0.0.0
 	github.com/tidwall/pretty v1.0.0 // indirect
 	github.com/wedeploy/gosocketio v0.0.7-beta
 	github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c // indirect
@@ -61,7 +61,7 @@ require (
 	go.opencensus.io v0.21.0
 	golang.org/x/crypto v0.0.0-20191001170739-f9e2070545dc
 	golang.org/x/net v0.0.0-20191021144547-ec77196f6094
-	golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae
+	golang.org/x/sys v0.0.0-20220412071739-889880a91fd5
 	golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898 // indirect
 	gopkg.in/karalabe/cookiejar.v2 v2.0.0-20150724131613-8dcd6a7f4951
 	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce

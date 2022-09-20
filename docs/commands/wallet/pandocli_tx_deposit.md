@@ -13,7 +13,7 @@ pandocli tx deposit [flags]
 ### Examples
 
 ```
-pandocli tx deposit --chain="pandonet" --source=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --holder=df1f3D3eE9430dB3A44aE6B80Eb3E23352BB785E --stake=6000000 --purpose=0 --seq=7
+pandocli tx deposit --chain="pandonet" --source=98fd878cd2267577ea6ac47bcb5ff4dd97d2f9e5 --holder=98fd878cd2267577ea6ac47bcb5ff4dd97d2f9e5 --stake=6000000 --purpose=0 --seq=7
 ```
 
 ### Options

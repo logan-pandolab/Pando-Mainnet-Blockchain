@@ -21,25 +21,25 @@ func init() {
 
 type Coins struct {
 	PandoWei *big.Int
-	PTXWei   *big.Int
+	PTXWei *big.Int
 }
 
 type CoinsJSON struct {
 	PandoWei *common.JSONBig `json:"PandoWei"`
-	PTXWei   *common.JSONBig `json:"PTXWei"`
+	PTXWei *common.JSONBig `json:"PTXWei"`
 }
 
 func NewCoinsJSON(coin Coins) CoinsJSON {
 	return CoinsJSON{
 		PandoWei: (*common.JSONBig)(coin.PandoWei),
-		PTXWei:   (*common.JSONBig)(coin.PTXWei),
+		PTXWei: (*common.JSONBig)(coin.PTXWei),
 	}
 }
 
 func (c CoinsJSON) Coins() Coins {
 	return Coins{
 		PandoWei: (*big.Int)(c.PandoWei),
-		PTXWei:   (*big.Int)(c.PTXWei),
+		PTXWei: (*big.Int)(c.PTXWei),
 	}
 }
 
@@ -60,7 +60,7 @@ func (c *Coins) UnmarshalJSON(data []byte) error {
 func NewCoins(pando int64, ptx int64) Coins {
 	return Coins{
 		PandoWei: big.NewInt(pando),
-		PTXWei:   big.NewInt(ptx),
+		PTXWei: big.NewInt(ptx),
 	}
 }
 
@@ -84,7 +84,7 @@ func (coins Coins) NoNil() Coins {
 
 	return Coins{
 		PandoWei: pando,
-		PTXWei:   ptx,
+		PTXWei: ptx,
 	}
 }
 
@@ -104,7 +104,7 @@ func (coins Coins) CalculatePercentage(percentage uint) Coins {
 
 	return Coins{
 		PandoWei: pando,
-		PTXWei:   ptx,
+		PTXWei: ptx,
 	}
 }
 
@@ -121,7 +121,7 @@ func (coinsA Coins) Plus(coinsB Coins) Coins {
 
 	return Coins{
 		PandoWei: pando,
-		PTXWei:   ptx,
+		PTXWei: ptx,
 	}
 }
 
@@ -136,7 +136,7 @@ func (coins Coins) Negative() Coins {
 
 	return Coins{
 		PandoWei: pando,
-		PTXWei:   ptx,
+		PTXWei: ptx,
 	}
 }
 
